@@ -148,6 +148,8 @@ class SeqDataset_Inference(Dataset):
         user_id = self.use_user[idx]
         seq = np.zeros([self.max_len], dtype=np.int32)
         idx = self.max_len - 1
+        seq[idx] = self.user_test[user_id][0]
+        idx -= 1
         seq[idx] = self.user_valid[user_id][0]
         idx -= 1
         for i in reversed(self.user_train[user_id]):
@@ -155,9 +157,9 @@ class SeqDataset_Inference(Dataset):
             idx -= 1
             if idx == -1:
                 break
-        rated = set(self.user_train[user_id])
+        rated = set(seq)
         rated.add(0)
-        pos = self.user_test[user_id][0]
+
         neg = []
         for _ in range(3):
             t = np.random.randint(1, self.num_item + 1)
@@ -165,7 +167,7 @@ class SeqDataset_Inference(Dataset):
                 t = np.random.randint(1, self.num_item + 1)
             neg.append(t)
         neg = np.array(neg)
-        return user_id, seq, pos, neg
+        return user_id, seq, neg
 
 
 # train/val/test data generation
