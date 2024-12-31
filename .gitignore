@@ -1,2 +1,2 @@
-/backend/data/
-/backend/models/saved_models/
+/backend/data/amazon/*
+/backend/models/saved_models/*
