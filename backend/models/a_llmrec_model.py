@@ -175,7 +175,8 @@ class A_llmrec_model(nn.Module):
         if mode == "phase2":
             self.pre_train_phase2(data, optimizer, batch_iter)
         if mode == "generate":
-            self.generate(data)
+            result = self.generate(data)
+            return result
 
     def make_interact_text(self, interact_ids, interact_max_num):
         interact_item_titles_ = self.find_item_text(
@@ -232,7 +233,7 @@ class A_llmrec_model(nn.Module):
             )
 
             input_text = ""
-            input_text += " is a user representation."
+            input_text += " is a user representation. "
             if self.args.rec_pre_trained_data == "Movies_and_TV":
                 input_text += "This user has watched "
             elif self.args.rec_pre_trained_data == "Video_Games":
@@ -246,17 +247,17 @@ class A_llmrec_model(nn.Module):
             input_text += interact_text
 
             if self.args.rec_pre_trained_data == "Movies_and_TV":
-                input_text += " in the previous. Recommend one next movie for this user to watch next from the following movie title set, "
+                input_text += " in the previous.\n Based on the user's watching history, recommend exactly five movies from the following list. "
             elif self.args.rec_pre_trained_data == "Video_Games":
-                input_text += " in the previous. Recommend one next game for this user to play next from the following game title set, "
+                input_text += " in the previous. Recommend five next games for this user to play next from the following game title set, "
             elif (
                 self.args.rec_pre_trained_data == "Luxury_Beauty"
                 or self.args.rec_pre_trained_data == "Toys_and_Games"
             ):
-                input_text += " in the previous. Recommend one next item for this user to buy next from the following item title set, "
+                input_text += " in the previous. Recommend five next items for this user to buy next from the following item title set, "
 
             input_text += candidate_text
-            input_text += ". The recommendation is "
+            input_text += ".\n Recommendations (separated by commas): "
 
             text_input.append(input_text)
 
@@ -292,12 +293,12 @@ class A_llmrec_model(nn.Module):
                 outputs = self.llm.llm_model.generate(
                     inputs_embeds=inputs_embeds,
                     attention_mask=attention_mask,
-                    do_sample=False,
+                    do_sample=True,
                     top_p=0.9,
                     temperature=1,
                     num_beams=1,
                     max_length=512,
-                    min_length=1,
+                    min_length=10,
                     pad_token_id=self.llm.llm_tokenizer.eos_token_id,
                     repetition_penalty=1.5,
                     length_penalty=1,
@@ -313,4 +314,4 @@ class A_llmrec_model(nn.Module):
         print(text_input[0])
         print("LLM: " + str(output_text[0]))
 
-        return output_text
+        return output_text[0]
