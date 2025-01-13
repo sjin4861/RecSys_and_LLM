@@ -13,17 +13,20 @@ class llm4rec(nn.Module):
         super().__init__()
         self.device = device
 
+        model_name = "facebook/opt-6.7b"
         if llm_model == "opt":
             self.llm_model = OPTForCausalLM.from_pretrained(
-                "facebook/opt-6.7b",
+                model_name,
                 torch_dtype=torch.float16,
                 load_in_8bit=True,
                 device_map=self.device,
             )
             self.llm_tokenizer = AutoTokenizer.from_pretrained(
-                "facebook/opt-6.7b", use_fast=False
+                model_name, use_fast=False
             )
             # self.llm_model = OPTForCausalLM.from_pretrained("facebook/opt-6.7b", torch_dtype=torch.float16, device_map=self.device)
+            max_input_tokens = self.llm_model.config.max_position_embeddings
+            print(f"Maximum input tokens: {max_input_tokens}")
         else:
             raise Exception(f"{llm_model} is not supported")
 
@@ -127,7 +130,6 @@ class llm4rec(nn.Module):
             text_output_tokens.input_ids,
             text_output_tokens.attention_mask,
         )
-        breakpoint()
 
         # 출력 부분(입력 부분은 다 -100으로 마스킹)
         targets = llm_tokens["input_ids"].masked_fill(
