@@ -8,7 +8,7 @@ empty1, con2, empty2 = st.columns([0.2, 1.2, 0.2])  # text input
 empty1, con3, empty2 = st.columns([0.2, 1.2, 0.2])  # text input
 empty1, con4, empty2 = st.columns([0.2, 1.2, 0.2])  # text input
 
-sample_user = {"id": "123", "password": "123"}  # dummy data
+sample_user = {"id": "USER", "password": "123"}  # dummy data
 
 
 def main():
