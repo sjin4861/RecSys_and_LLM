@@ -1,3 +1,5 @@
 __pycache__
 /ML/data/amazon/*
 /ML/models/saved_models/*
+/ML/log/*
+/ML/log_tensorboard/*
