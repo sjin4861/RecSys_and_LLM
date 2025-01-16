@@ -1,2 +1,7 @@
-/ML/data/amazon/*
+__pycache__
+.vscode
+/ML/data
 /ML/models/saved_models/*
+/ML/log
+/backend/models
+/backend/log
