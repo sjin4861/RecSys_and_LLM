@@ -106,12 +106,7 @@ class ModelManager:
         self.lgcn_model = None
         self.expected_dict = None
         self.lgcn_dataset = None
-        self._load_models()
-
-    def _load_models(self):
-        """모델 및 데이터 로드 로직"""
-        # Load ALLMRec Model
-        llmrec_args = Namespace(
+        self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
             gpu_num=0,  # GPU 번호
             llm="opt",  # LLM 모델 선택
@@ -129,11 +124,19 @@ class ModelManager:
             stage2_lr=0.0001,  # 단계 2 학습률
             device="cuda:0",  # 디바이스 설정
         )
-        self.allmrec_model = A_llmrec_model(llmrec_args).to(llmrec_args.device)
+        self._load_models()
+
+    def _load_models(self):
+        """모델 및 데이터 로드 로직"""
+        # Load ALLMRec Model
+
+        self.allmrec_model = A_llmrec_model(self.llmrec_args).to(
+            self.llmrec_args.device
+        )
         phase1_epoch = 10
         phase2_epoch = 10
         self.allmrec_model.load_model(
-            llmrec_args, phase1_epoch=phase1_epoch, phase2_epoch=phase2_epoch
+            self.llmrec_args, phase1_epoch=phase1_epoch, phase2_epoch=phase2_epoch
         )
         self.allmrec_model.eval()
 
@@ -143,6 +146,7 @@ class ModelManager:
     def inference(self, user_id):
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
+        lgcn_predictions = "no"
         lgcn_predictions = predict(
             str(user_id), self.expected_dict, self.lgcn_model, self.lgcn_dataset
         )
@@ -151,6 +155,7 @@ class ModelManager:
         # ALLMRec 모델 기반 예측
         dataset = load_data(
             self.allmrec_model.args.rec_pre_trained_data,
+            self.llmrec_args.maxlen,
             path=f"./ML/data/amazon/{self.allmrec_model.args.rec_pre_trained_data}.txt",
         )
         [data, usernum, itemnum] = dataset
