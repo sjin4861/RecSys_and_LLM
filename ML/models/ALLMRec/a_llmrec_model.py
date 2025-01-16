@@ -581,13 +581,13 @@ class A_llmrec_model(nn.Module):
         return output_text
 
     def inference(self, data):
-        u, seq, neg = data
+        u, seq = data
 
         text_input = []
         interact_embs = []
         candidate_embs = []
         with torch.no_grad():
-            log_emb = self.recsys.model(u, seq, neg)
+            log_emb = self.recsys.model(seq)
 
             interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
 

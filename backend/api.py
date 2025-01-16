@@ -7,7 +7,7 @@ import torch
 import torch.multiprocessing as mp
 import torch.nn as nn
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -15,42 +15,45 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
-from backend.inference import inference, llmrec_args
+from backend.inference import ModelManager
 from ML.models.ALLMRec.a_llmrec_model import *
 from ML.models.ALLMRec.pre_train.sasrec.utils import *
 
 # FastAPI 앱 생성
 app = FastAPI()
 
-
-# 요청 데이터 구조 정의
-class PredictionRequest(BaseModel):
-    input: int  # 단일 실수 입력
+model_manager = None
 
 
-model = A_llmrec_model(llmrec_args).to(llmrec_args.device)
-phase1_epoch = 10
-phase2_epoch = 10
-model.load_model(llmrec_args, phase1_epoch=phase1_epoch, phase2_epoch=phase2_epoch)
-model.eval()
+class PredictRequest(BaseModel):
+    user_id: int
 
 
-# 기본 엔드포인트 정의
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the FastAPI backend!"}
+@app.on_event("startup")
+async def startup_event():
+    """서버 시작 시 모델 로드"""
+    global model_manager
+    model_manager = ModelManager()
+    print("모델이 성공적으로 로드되었습니다.")
 
 
-# 엔드포인트 정의
 @app.post("/predict")
-def predict(request: PredictionRequest):
-    # 입력 데이터를 PyTorch 텐서로 변환
-    user_id = torch.tensor([[request.input]], dtype=torch.int32)
-    # 모델 예측
-    with torch.no_grad():
-        prediction = inference(user_id, model)
-    return {"input": request.input, "prediction": prediction}
+def predict(
+    request: PredictRequest, model: ModelManager = Depends(lambda: model_manager)
+):
+    user_id = request.user_id
+
+    if model is None:
+        return {"error": "모델이 로드되지 않았습니다."}
+
+    # 모델 기반 추론 수행
+    result = model.inference(user_id)
+    return result
 
 
-# if __name__ == "__main__":
-#     uvicorn.run("backend.api:app", host="0.0.0.0", port=8000, reload=True)
+@app.on_event("shutdown")
+async def shutdown_event():
+    """서버 종료 시 리소스 정리"""
+    global model_manager
+    model_manager = None
+    print("서버가 종료되었습니다. 모델 리소스가 해제되었습니다.")
