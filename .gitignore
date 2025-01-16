@@ -2,6 +2,7 @@ __pycache__
 .vscode
 /ML/data
 /ML/models/saved_models/*
+/models/saved_models/*
 /ML/log
 /backend/models
 /backend/log

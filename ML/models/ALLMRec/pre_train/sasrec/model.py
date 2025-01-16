@@ -105,7 +105,7 @@ class SASRec(torch.nn.Module):
         log_feats = self.last_layernorm(seqs)
         return log_feats
 
-    def forward(self, user_ids, log_seqs, neg_seqs):
+    def forward(self, log_seqs):
         log_feats = self.log2feats(log_seqs)
         log_feats = log_feats[:, -1, :]
         return log_feats

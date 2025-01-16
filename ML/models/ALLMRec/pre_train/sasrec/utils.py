@@ -209,6 +209,28 @@ def data_partition(fname, path=None):
     return [user_train, user_valid, user_test, usernum, itemnum]
 
 
+def load_data(fname, path=None):
+    usernum = 0
+    itemnum = 0
+    User = defaultdict(list)
+    # assume user/item index starting from 1
+
+    # f = open('./pre_train/sasrec/data/%s.txt' % fname, 'r')
+    if path == None:
+        f = open("./ML/data/amazon/%s.txt" % fname, "r")
+    else:
+        f = open(path, "r")
+    for line in f:
+        u, i = line.rstrip().split(" ")
+        u = int(u)
+        i = int(i)
+        usernum = max(u, usernum)  # id가 곧 유저의 개수
+        itemnum = max(i, itemnum)
+        User[u].append(i)
+
+    return [User, usernum, itemnum]
+
+
 def make_candidate_for_LLM(model, itemnum, log_seq, args):
     seq = np.zeros([args.maxlen], dtype=np.int32)
     idx = args.maxlen - 1
