@@ -589,7 +589,7 @@ class A_llmrec_model(nn.Module):
         with torch.no_grad():
             log_emb = self.recsys.model(seq)
 
-            interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
+            interact_text, interact_ids = self.make_interact_text(seq[seq > 0], "all")
 
             candidate_num = 20
             candidate_text, candidate_ids = self.make_candidate_text_inference(
