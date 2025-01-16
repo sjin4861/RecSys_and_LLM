@@ -4,11 +4,12 @@ import random
 import numpy as np
 import torch
 import torch.nn as nn
-from models.llm4rec import *
-from models.recsys_model import *
-from pre_train.sasrec.utils import *
 from sentence_transformers import SentenceTransformer
 from torch.cuda.amp import autocast as autocast
+
+from ML.models.ALLMRec.llm4rec import *
+from ML.models.ALLMRec.pre_train.sasrec.utils import *
+from ML.models.ALLMRec.recsys_model import *
 
 
 class two_layer_mlp(nn.Module):
@@ -34,7 +35,7 @@ class A_llmrec_model(nn.Module):
         self.device = args.device
 
         with open(
-            f"./data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
+            f"./ML/data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
         ) as ft:
             self.text_name_dict = pickle.load(ft)
 
@@ -110,7 +111,7 @@ class A_llmrec_model(nn.Module):
             torch.save(self.item_emb_proj.state_dict(), out_dir + "item_proj.pt")
 
     def load_model(self, args, phase1_epoch=None, phase2_epoch=None):
-        out_dir = f"./models/saved_models/{args.rec_pre_trained_data}_{args.recsys}_{phase1_epoch}_"
+        out_dir = f"./ML/models/saved_models/{args.rec_pre_trained_data}_{args.recsys}_{phase1_epoch}_"
 
         mlp = torch.load(out_dir + "mlp.pt", map_location=args.device)
         self.mlp.load_state_dict(mlp)

@@ -6,8 +6,8 @@ import time
 import torch
 import torch.multiprocessing as mp
 import torch.nn as nn
+import uvicorn
 from fastapi import FastAPI
-from inference import inference, llmrec_args
 from pydantic import BaseModel
 from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -15,8 +15,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
-from ML.models.a_llmrec_model import *
-from ML.pre_train.sasrec.utils import *
+from backend.inference import inference, llmrec_args
+from ML.models.ALLMRec.a_llmrec_model import *
+from ML.models.ALLMRec.pre_train.sasrec.utils import *
 
 # FastAPI 앱 생성
 app = FastAPI()
@@ -49,3 +50,7 @@ def predict(request: PredictionRequest):
     with torch.no_grad():
         prediction = inference(user_id, model)
     return {"input": request.input, "prediction": prediction}
+
+
+# if __name__ == "__main__":
+#     uvicorn.run("backend.api:app", host="0.0.0.0", port=8000, reload=True)

@@ -12,8 +12,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
-from ML.models.a_llmrec_model import *
-from ML.pre_train.sasrec.utils import *
+from ML.models.ALLMRec.a_llmrec_model import *
+from ML.models.ALLMRec.pre_train.sasrec.utils import *
 
 # 고정된 args 값 설정
 llmrec_args = Namespace(
@@ -46,7 +46,7 @@ def setup_ddp(rank, world_size):
 def inference(user_id, model):
     dataset = data_partition(
         llmrec_args.rec_pre_trained_data,
-        path=f"./data/amazon/{llmrec_args.rec_pre_trained_data}.txt",
+        path=f"./ML/data/amazon/{llmrec_args.rec_pre_trained_data}.txt",
     )
     [user_train, user_valid, user_test, usernum, itemnum] = dataset
     print("user num:", usernum, "item num:", itemnum)

@@ -7,12 +7,13 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
-from pre_train.sasrec.model import SASRec
-from utils import *
+
+from ML.models.ALLMRec.pre_train.sasrec.model import SASRec
+from ML.utils import *
 
 
 def load_checkpoint(recsys, pre_trained):
-    path = f"pre_train/{recsys}/{pre_trained}/"
+    path = f"./ML/models/ALLMRec/pre_train/{recsys}/{pre_trained}/"
 
     pth_file_path = find_filepath(path, ".pth")
     assert (
