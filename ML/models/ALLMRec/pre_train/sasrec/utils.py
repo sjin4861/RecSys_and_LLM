@@ -209,10 +209,12 @@ def data_partition(fname, path=None):
     return [user_train, user_valid, user_test, usernum, itemnum]
 
 
-def load_data(fname, path=None):
+def load_data(fname, max_len, path=None):
     usernum = 0
     itemnum = 0
     User = defaultdict(list)
+    data = {}
+
     # assume user/item index starting from 1
 
     # f = open('./pre_train/sasrec/data/%s.txt' % fname, 'r')
@@ -228,7 +230,19 @@ def load_data(fname, path=None):
         itemnum = max(i, itemnum)
         User[u].append(i)
 
-    return [User, usernum, itemnum]
+    for user in User:
+        seq = [0] * max_len
+        length_idx = max_len - 1
+
+        for i in reversed(User[user][:-1]):
+            seq[length_idx] = i
+            length_idx -= 1
+            if length_idx == -1:
+                break
+
+        data[user] = seq
+
+    return [data, usernum, itemnum]
 
 
 def make_candidate_for_LLM(model, itemnum, log_seq, args):
