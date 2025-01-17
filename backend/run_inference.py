@@ -50,7 +50,7 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     model_path = hf_hub_download(
         repo_id="PNUDI/LightGCN",
         filename=f"{model_version}.pth",
-        cache_dir="./models/saved_models",
+        cache_dir="../ML/models/saved_models",
         repo_type="model",
     )
     with open(f"{data_path}/Movies_and_TV_text_name_dict.json.gz", "rb") as f:
