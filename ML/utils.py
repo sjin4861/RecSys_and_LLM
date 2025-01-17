@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import numpy as np
 from pytz import timezone
 
 
@@ -18,3 +19,11 @@ def find_filepath(target_path, target_word):
                 file_paths.append(target_path + file)
 
     return file_paths
+
+
+def get_missing(title_id_dict):
+    exist_ids = np.array(list(title_id_dict.keys()))
+
+    return np.setdiff1d(
+        np.arange(1, max(exist_ids) + 1, dtype=np.int32), exist_ids, assume_unique=True
+    ).tolist()

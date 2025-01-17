@@ -13,6 +13,7 @@ abs_path = "/".join(os.path.abspath(__file__).split("/")[:4])
 sys.path.insert(0, abs_path)
 
 from ML import MLGCN
+from ML.utils import get_missing
 
 
 def load_data_and_model(model_file, data_path):
@@ -20,12 +21,8 @@ def load_data_and_model(model_file, data_path):
     config = checkpoint["config"]
     init_seed(config["seed"], config["reproducibility"])
     config["data_path"] = data_path
-    init_logger(config)
-    logger = getLogger()
-    logger.info(config)
 
     dataset = create_dataset(config)
-    logger.info(dataset)
     train_data, valid_data, test_data = data_preparation(config, dataset)
     config["model"] = "MLGCN" if config["model"] == "LightGCN" else "MODEL NAME ERROR"
     print(f"######### LOAD MODEL : {config["model"]} #########")
@@ -50,7 +47,7 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     model_path = hf_hub_download(
         repo_id="PNUDI/LightGCN",
         filename=f"{model_version}.pth",
-        cache_dir="./models/saved_models",
+        cache_dir="../ML/models/saved_models",
         repo_type="model",
     )
     with open(f"{data_path}/Movies_and_TV_text_name_dict.json.gz", "rb") as f:
@@ -62,7 +59,9 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     return expected_dict["title"], model, dataset
 
 
-def predict(user_token: str, token2title: dict, model, dataset, topk: int = 10):
+def predict(
+    user_token: str, token2title: dict, missing_list, model, dataset, topk: int = 20
+):
     matrix = dataset.inter_matrix(form="csr")
     model.eval()
     user_id = dataset.token2id("user_id", user_token)
@@ -76,18 +75,22 @@ def predict(user_token: str, token2title: dict, model, dataset, topk: int = 10):
     arr_ind = rating_pred[ind]
     arr_ind_argsort = np.argsort(arr_ind)[::-1]
     batch_pred_list = ind[arr_ind_argsort]
-    batch_pred_list = batch_pred_list.astype(str)
 
     # print(f'user_token : {user_token}, user_id : {user_id}')
     # print(f'item_pred_ids : {batch_pred_list}, item_pred_tokens : {[dataset.token2id('item_id', item) for item in batch_pred_list]}')
 
-    return [token2title[int(ele.item())] for ele in batch_pred_list]
+    return [
+        token2title[int(dataset.id2token("item_id", ele).item())]
+        for ele in batch_pred_list
+        if int(dataset.id2token("item_id", ele).item()) not in missing_list
+    ][: topk // 2]
 
 
 if __name__ == "__main__":
     ### 실행 예시 ###
     expected_dict, model, dataset = prepare()  # 모델 로딩 -> 초기에 한 번만 실행되면 됨
+    missing_list = get_missing(expected_dict)
     user_token = "987"  # 추론할 유저 토큰 [1~311143]
     print(
-        "\n".join(predict(user_token, expected_dict, model, dataset))
+        "\n".join(predict(user_token, expected_dict, missing_list, model, dataset))
     )  # 추론 및 결과 출력
