@@ -13,6 +13,7 @@ abs_path = "/".join(os.path.abspath(__file__).split("/")[:4])
 sys.path.insert(0, abs_path)
 
 from ML import MLGCN
+from ML.utils import get_missing
 
 
 def load_data_and_model(model_file, data_path):
@@ -58,7 +59,8 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     return expected_dict["title"], model, dataset
 
 
-def predict(user_token: str, token2title: dict, model, dataset, topk: int = 10):
+def predict(user_token: str, token2title: dict, model, dataset, topk: int = 20):
+    missing_list = get_missing()
     matrix = dataset.inter_matrix(form="csr")
     model.eval()
     user_id = dataset.token2id("user_id", user_token)
@@ -72,12 +74,15 @@ def predict(user_token: str, token2title: dict, model, dataset, topk: int = 10):
     arr_ind = rating_pred[ind]
     arr_ind_argsort = np.argsort(arr_ind)[::-1]
     batch_pred_list = ind[arr_ind_argsort]
-    batch_pred_list = batch_pred_list.astype(str)
 
     # print(f'user_token : {user_token}, user_id : {user_id}')
     # print(f'item_pred_ids : {batch_pred_list}, item_pred_tokens : {[dataset.token2id('item_id', item) for item in batch_pred_list]}')
 
-    return [token2title[int(ele.item())] for ele in batch_pred_list]
+    return [
+        token2title[int(dataset.id2token("item_id", ele).item())]
+        for ele in batch_pred_list
+        if int(dataset.id2token("item_id", ele).item()) not in missing_list
+    ][: topk // 2]
 
 
 if __name__ == "__main__":
