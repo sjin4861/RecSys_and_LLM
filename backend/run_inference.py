@@ -20,12 +20,8 @@ def load_data_and_model(model_file, data_path):
     config = checkpoint["config"]
     init_seed(config["seed"], config["reproducibility"])
     config["data_path"] = data_path
-    init_logger(config)
-    logger = getLogger()
-    logger.info(config)
 
     dataset = create_dataset(config)
-    logger.info(dataset)
     train_data, valid_data, test_data = data_preparation(config, dataset)
     config["model"] = "MLGCN" if config["model"] == "LightGCN" else "MODEL NAME ERROR"
     print(f"######### LOAD MODEL : {config["model"]} #########")
