@@ -59,8 +59,9 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     return expected_dict["title"], model, dataset
 
 
-def predict(user_token: str, token2title: dict, model, dataset, topk: int = 20):
-    missing_list = get_missing()
+def predict(
+    user_token: str, token2title: dict, missing_list, model, dataset, topk: int = 20
+):
     matrix = dataset.inter_matrix(form="csr")
     model.eval()
     user_id = dataset.token2id("user_id", user_token)
@@ -88,7 +89,8 @@ def predict(user_token: str, token2title: dict, model, dataset, topk: int = 20):
 if __name__ == "__main__":
     ### 실행 예시 ###
     expected_dict, model, dataset = prepare()  # 모델 로딩 -> 초기에 한 번만 실행되면 됨
+    missing_list = get_missing(expected_dict)
     user_token = "987"  # 추론할 유저 토큰 [1~311143]
     print(
-        "\n".join(predict(user_token, expected_dict, model, dataset))
+        "\n".join(predict(user_token, expected_dict, missing_list, model, dataset))
     )  # 추론 및 결과 출력

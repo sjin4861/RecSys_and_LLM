@@ -74,8 +74,9 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
     return expected_dict["title"], model, dataset
 
 
-def predict(user_token: str, token2title: dict, model, dataset, topk: int = 20):
-    missing_list = get_missing()
+def predict(
+    user_token: str, token2title: dict, missing_list, model, dataset, topk: int = 20
+):
     matrix = dataset.inter_matrix(form="csr")
     model.eval()
     user_id = dataset.token2id("user_id", user_token)
@@ -107,6 +108,7 @@ class ModelManager:
         self.lgcn_model = None
         self.expected_dict = None
         self.lgcn_dataset = None
+        self.missing_list = None
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
             gpu_num=0,  # GPU 번호
@@ -143,13 +145,18 @@ class ModelManager:
 
         # Load LGCN Model and Dataset
         self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
+        self.missing_list = get_missing(self.expected_dict)
 
     def inference(self, user_id):
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
         lgcn_predictions = "no"
         lgcn_predictions = predict(
-            str(user_id), self.expected_dict, self.lgcn_model, self.lgcn_dataset
+            str(user_id),
+            self.expected_dict,
+            self.missing_list,
+            self.lgcn_model,
+            self.lgcn_dataset,
         )
         lgcn_predictions = "\n".join(lgcn_predictions)
 
