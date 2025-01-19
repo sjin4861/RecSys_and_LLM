@@ -1,5 +1,7 @@
 import pickle
-from collections import defaultdict
+from collections import Counter, defaultdict
+
+import matplotlib.pyplot as plt
 
 with open(f"./data/amazon/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
     text_name_dict = pickle.load(ft)
@@ -53,7 +55,7 @@ def load_data(fname, max_len, path=None):
 
         data[user] = seq
 
-    return data
+    return data, User
 
 
 # Missing item을 포함하는 유저와 아이템 찾기
@@ -71,19 +73,77 @@ def find_users_with_missing_items(dataset, missing_items):
     return users_with_missing_items
 
 
-missing, desc_missing = find_missing_numbers(
-    list(text_name_dict["title"].keys()),
-    list(text_name_dict["description"].keys()),
-    1,
-    86678,
-)
-dataset = load_data("Movies_and_TV", 50)
-users_with_missing = find_users_with_missing_items(dataset, missing)
+def calculate_seq_distribution(dataset):
+    # all_dataset 넣어야 됨
+    # Step 1: Calculate sequence lengths
+    seq_lengths = [len(items) for items in dataset.values()]
+
+    # Step 2: Count users for each sequence length
+    length_counts = defaultdict(int)
+    for length in seq_lengths:
+        length_counts[length] += 1
+
+    # Step 3: Convert to sorted lists for visualization
+    sorted_lengths = sorted(length_counts.items())  # (seq_length, user_count)
+
+    # Print the distribution
+    print("Sequence Length Distribution:")
+    for length, count in sorted_lengths:
+        print(f"Length {length}: {count} users")
+
+
+def warm_and_cold(dataset):
+    item_interactions = []
+    for user, items in dataset.items():
+        item_interactions.extend(items)
+
+    # Step 2: Count occurrences of each item
+    item_counts = Counter(item_interactions)
+
+    # Step 3: Sort items by interaction count
+    sorted_items = sorted(
+        item_counts.items(), key=lambda x: x[1], reverse=True
+    )  # (item, count)
+
+    # Step 4: Calculate thresholds for warm and cold items
+    total_items = len(sorted_items)
+    warm_threshold = int(total_items * 0.35)  # Top 35%
+    cold_threshold = int(total_items * 0.35)  # Bottom 35%
+
+    # Get cold items (bottom 35% of interactions)
+    cold_items = [item for item, count in sorted_items[-cold_threshold:]]
+
+    # Get warm items (top 35% of interactions)
+    warm_items = [item for item, count in sorted_items[:warm_threshold]]
+
+    return warm_items, cold_items
+
+
+def find_first_user_with_cold_items(dataset, cold_items):
+    for user, items in dataset.items():
+        # 사용자의 시퀀스 중 cold_items에 포함된 것이 있는지 확인
+        if any(item in cold_items for item in items):
+            return user
+
+
+# missing, desc_missing = find_missing_numbers(
+#     list(text_name_dict["title"].keys()),
+#     list(text_name_dict["description"].keys()),
+#     1,
+#     86678,
+# )
+dataset, all_dataset = load_data("Movies_and_TV", 50)
+# users_with_missing = find_users_with_missing_items(dataset, missing)
+
+w, c = warm_and_cold(dataset)
+
+cold_item_included_users = find_first_user_with_cold_items(dataset, c)
+print(cold_item_included_users)
 
 # 결과 출력
-print(len(list(users_with_missing.keys())))
-print(missing)
-print()
-print(users_with_missing[117])
-print()
-print(dataset[117])
+# print(len(list(users_with_missing.keys())))
+# print(missing)
+# print()
+# print(users_with_missing[117])
+# print()
+# print(dataset[117])

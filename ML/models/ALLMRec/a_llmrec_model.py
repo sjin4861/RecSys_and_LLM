@@ -33,6 +33,7 @@ class A_llmrec_model(nn.Module):
         rec_pre_trained_data = args.rec_pre_trained_data
         self.args = args
         self.device = args.device
+        self.cold_items = args.cold_items
 
         with open(
             f"./ML/data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
@@ -47,7 +48,8 @@ class A_llmrec_model(nn.Module):
 
         # Item Encoder
         self.mlp = two_layer_mlp(self.rec_sys_dim)
-        if args.pretrain_stage1:
+
+        if args.pretrain_stage1 or args.inference:
             self.sbert = SentenceTransformer("nq-distilbert-base-v1")
             # Text Encoder
             self.mlp2 = two_layer_mlp(self.sbert_dim)
@@ -113,10 +115,18 @@ class A_llmrec_model(nn.Module):
     def load_model(self, args, phase1_epoch=None, phase2_epoch=None):
         out_dir = f"./ML/models/saved_models/{args.rec_pre_trained_data}_{args.recsys}_{phase1_epoch}_"
 
+        # Item Encoder load
         mlp = torch.load(out_dir + "mlp.pt", map_location=args.device)
         self.mlp.load_state_dict(mlp)
         del mlp
         for name, param in self.mlp.named_parameters():
+            param.requires_grad = False
+
+        # Text Encoder load
+        mlp2 = torch.load(out_dir + "mlp2.pt", map_location=args.device)
+        self.mlp2.load_state_dict(mlp2)
+        del mlp2
+        for name, param in self.mlp2.named_parameters():
             param.requires_grad = False
 
         if args.inference:
@@ -161,12 +171,44 @@ class A_llmrec_model(nn.Module):
         elif not title_flag and description_flag:
             return f'"{self.text_name_dict[d].get(item,d_)}"'
 
-    def get_item_emb(self, item_ids):
+    def get_item_emb(self, item_ids, mode=None):
+        # breakpoint()
         with torch.no_grad():
             item_embs = self.recsys.model.item_emb(
                 torch.LongTensor(item_ids).to(self.device)
             )
+            # 2개 layer(encoder, decoder)중, encoder를 거친 값만 사용
             item_embs, _ = self.mlp(item_embs)
+
+            if mode == "cold":
+                # Step 1: Cold items의 인덱스 추출
+                cold_indices = [
+                    idx for idx, item in enumerate(item_ids) if item in self.cold_items
+                ]
+
+                # cold item 있는지 확인
+                if cold_indices:
+                    # Step 2: Cold items 텍스트 추출
+                    cold_item_ids = [item_ids[idx] for idx in cold_indices]
+                    cold_texts = self.find_item_text(cold_item_ids)  # 한번에 처리
+
+                    # Step 3: Cold items 텍스트 임베딩 계산 (배치 처리)
+                    cold_tokens = self.sbert.tokenize(cold_texts)
+                    cold_text_embeddings = self.sbert(
+                        {
+                            "input_ids": cold_tokens["input_ids"].to(self.device),
+                            "attention_mask": cold_tokens["attention_mask"].to(
+                                self.device
+                            ),
+                        }
+                    )[
+                        "sentence_embedding"
+                    ]  # SBERT hidden dim 768
+
+                    cold_text_matching_text, _ = self.mlp2(cold_text_embeddings)
+
+                    for idx, emb in zip(cold_indices, cold_text_matching_text):
+                        item_embs[idx] = emb
 
         return item_embs
 
@@ -606,8 +648,12 @@ class A_llmrec_model(nn.Module):
 
             text_input.append(input_text)
 
-            interact_embs.append(self.item_emb_proj(self.get_item_emb(interact_ids)))
-            candidate_embs.append(self.item_emb_proj(self.get_item_emb(candidate_ids)))
+            interact_embs.append(
+                self.item_emb_proj(self.get_item_emb(interact_ids, mode="cold"))
+            )
+            candidate_embs.append(
+                self.item_emb_proj(self.get_item_emb(candidate_ids, mode="cold"))
+            )
 
         # user representation projection
         log_emb = self.log_emb_proj(log_emb)
