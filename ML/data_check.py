@@ -7,21 +7,6 @@ with open(f"./data/amazon/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
     text_name_dict = pickle.load(ft)
 
 
-def find_missing_numbers(numbers, desc_numbers, start, end):
-    # 전체 범위 집합
-    full_set = set(range(start, end + 1))
-
-    # 리스트에서 실제로 있는 숫자 집합
-    number_set = set(numbers)
-    desc_number_set = set(desc_numbers)
-
-    # 빠진 숫자 찾기
-    missing_numbers = sorted(full_set - number_set)
-    desc_missing_numbers = sorted(full_set - desc_number_set)
-
-    return missing_numbers, desc_missing_numbers
-
-
 def load_data(fname, max_len, path=None):
     usernum = 0
     itemnum = 0
@@ -56,6 +41,19 @@ def load_data(fname, max_len, path=None):
         data[user] = seq
 
     return data, User
+
+
+def find_missing_numbers(numbers, start, end):
+    # 전체 범위 집합
+    full_set = set(range(start, end + 1))
+
+    # 리스트에서 실제로 있는 숫자 집합
+    number_set = set(numbers)
+
+    # 빠진 숫자 찾기
+    missing_numbers = sorted(full_set - number_set)
+
+    return missing_numbers
 
 
 # Missing item을 포함하는 유저와 아이템 찾기
@@ -126,7 +124,7 @@ def find_first_user_with_cold_items(dataset, cold_items):
             return user
 
 
-# missing, desc_missing = find_missing_numbers(
+# missing = find_missing_numbers(
 #     list(text_name_dict["title"].keys()),
 #     list(text_name_dict["description"].keys()),
 #     1,

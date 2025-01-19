@@ -34,6 +34,7 @@ class A_llmrec_model(nn.Module):
         self.args = args
         self.device = args.device
         self.cold_items = args.cold_items
+        self.missing_items = args.missing_items
 
         with open(
             f"./ML/data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
@@ -348,6 +349,7 @@ class A_llmrec_model(nn.Module):
         )
 
     def make_interact_text(self, interact_ids, interact_max_num):
+        interact_ids = [item for item in interact_ids if item not in self.missing_items]
         interact_item_titles_ = self.find_item_text(
             interact_ids, title_flag=True, description_flag=False
         )
@@ -400,12 +402,13 @@ class A_llmrec_model(nn.Module):
         candidate_text = []
 
         # candidate_ids에 neg_item_id(랜덤 생성)를 넣는다,,,,, -> historical & user-representation을 결합한 벡터와 유사한 아이템을 넣을 순 없나
+        candidate_ids = [
+            item for item in candidate_ids if item not in self.missing_items
+        ]
         for candidate in candidate_ids:
             title = self.find_item_text_single(
                 candidate, title_flag=True, description_flag=False
             )
-            if title == '"No Title"':
-                continue
             candidate_text.append(title + "[CandidateEmb]")
 
         random_ = np.random.permutation(len(candidate_text))
