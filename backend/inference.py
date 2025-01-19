@@ -174,6 +174,8 @@ class ModelManager:
         seq = np.expand_dims(np.array(data[user_id]), axis=0)
         allmrec_prediction = self.allmrec_model([user_id, seq], mode="inference")
 
+        print(allmrec_prediction)
+
         return {
             "lgcn_predictions": lgcn_predictions,
             "allmrec_prediction": allmrec_prediction,
