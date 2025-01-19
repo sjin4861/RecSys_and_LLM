@@ -359,12 +359,12 @@ class A_llmrec_model(nn.Module):
 
         # candidate_ids에 neg_item_id(랜덤 생성)를 넣는다,,,,, -> historical & user-representation을 결합한 벡터와 유사한 아이템을 넣을 순 없나
         for candidate in candidate_ids:
-            candidate_text.append(
-                self.find_item_text_single(
-                    candidate, title_flag=True, description_flag=False
-                )
-                + "[CandidateEmb]"
+            title = self.find_item_text_single(
+                candidate, title_flag=True, description_flag=False
             )
+            if title == '"No Title"':
+                continue
+            candidate_text.append(title + "[CandidateEmb]")
 
         random_ = np.random.permutation(len(candidate_text))
         candidate_text = np.array(candidate_text)[random_]
@@ -589,7 +589,7 @@ class A_llmrec_model(nn.Module):
         with torch.no_grad():
             log_emb = self.recsys.model(seq)
 
-            interact_text, interact_ids = self.make_interact_text(seq[seq > 0], "all")
+            interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
 
             candidate_num = 20
             candidate_text, candidate_ids = self.make_candidate_text_inference(
