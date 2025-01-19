@@ -2,7 +2,7 @@ import copy
 import os
 import random
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 from multiprocessing import Process, Queue
 
@@ -277,3 +277,28 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     ]  # 인덱스를 아이템 번호로 매핑
 
     return top_k_items
+
+
+def find_cold(dataset):
+    [data, usernum, itemnum] = dataset
+
+    item_interactions = []
+    for user, items in data.items():
+        item_interactions.extend(items)
+
+    # Step 2: Count occurrences of each item
+    item_counts = Counter(item_interactions)
+
+    # Step 3: Sort items by interaction count
+    sorted_items = sorted(
+        item_counts.items(), key=lambda x: x[1], reverse=True
+    )  # (item, count)
+
+    # Step 4: Calculate thresholds for warm and cold items
+    total_items = len(sorted_items)
+    cold_threshold = int(total_items * 0.35)  # Bottom 35%
+
+    # Get cold items (bottom 35% of interactions)
+    cold_items = [item for item, count in sorted_items[-cold_threshold:]]
+
+    return cold_items
