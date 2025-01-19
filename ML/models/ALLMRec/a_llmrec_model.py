@@ -157,7 +157,7 @@ class A_llmrec_model(nn.Module):
         if title_flag and description_flag:
             return f'"{self.text_name_dict[t].get(item,t_)}, {self.text_name_dict[d].get(item,d_)}"'
         elif title_flag and not description_flag:
-            return f'"{self.text_name_dict[t].get(item,t_)}"'
+            return f'"{self.text_name_dict[t].get(item,t_)}(ID: {item})"'
         elif not title_flag and description_flag:
             return f'"{self.text_name_dict[d].get(item,d_)}"'
 
@@ -600,7 +600,7 @@ class A_llmrec_model(nn.Module):
             input_text = ""
             input_text += " is a user representation. This user has watched "
             input_text += interact_text
-            input_text += " in the previous. Recommend one next movie for this user to watch next from the following movie title set, "
+            input_text += " in the previous. Recommend one next movie and its ID for this user to watch next from the following movie title set, "
             input_text += candidate_text
             input_text += ". The recommendation is "
 
