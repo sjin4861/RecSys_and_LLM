@@ -1,5 +1,8 @@
 import argparse
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pickle
 import random
 import time
@@ -21,6 +24,7 @@ from tqdm import tqdm
 from ML.models.ALLMRec.a_llmrec_model import *
 from ML.models.ALLMRec.pre_train.sasrec.utils import *
 from ML.models.LGCN.model import MLGCN
+from ML.models.TiSASRec.TiSASRec_inference import *
 from ML.utils import get_missing
 
 
@@ -127,7 +131,34 @@ class ModelManager:
             stage2_lr=0.0001,  # 단계 2 학습률
             device="cuda:0",  # 디바이스 설정
         )
-        self._load_models()
+        self.tisasrec_args = Namespace(
+            dataset="Movies_and_TV_Time",
+            batch_size=200,
+            lr=0.001,
+            maxlen=50,
+            hidden_units=64,
+            num_blocks=2,
+            num_epochs=1000,
+            num_heads=1,
+            dropout_rate=0.2,
+            l2_emb=0.00005,
+            device="cuda",
+            time_span=256,
+            state_dict_path="../ML/models/saved_models/TiSASRec_model_epoch_1000.pt",
+        )
+        # self._load_models()
+
+    def test_data(self):
+        dataset = data_partition(self.tisasrec_args.dataset)
+        User, usernum, itemnum, timenum, item_map, reverse_item_map = dataset
+        model = initialize_model(self.tisasrec_args, usernum, itemnum)
+        model.load_state_dict(torch.load(self.tisasrec_args.state_dict_path))
+        with open(f"../ML/data/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
+            text_name_dict = pickle.load(ft)
+        tok5_title = recommend_top5(
+            self.tisasrec_args, model, 973, dataset, text_name_dict
+        )
+        print(tok5_title)
 
     def _load_models(self):
         """모델 및 데이터 로드 로직"""
@@ -180,3 +211,7 @@ class ModelManager:
             "lgcn_predictions": lgcn_predictions,
             "allmrec_prediction": allmrec_prediction,
         }
+
+
+a = ModelManager()
+a.test_data()
