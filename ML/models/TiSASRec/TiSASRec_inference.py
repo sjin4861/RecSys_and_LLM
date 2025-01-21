@@ -10,7 +10,7 @@ import torch
 from .model import TiSASRec
 
 
-def initialize_model(args, usernum, itemnum):
+def tisasrec_initialize_model(args, usernum, itemnum):
     model = TiSASRec(usernum, itemnum, itemnum, args).to(args.device)
     for name, param in model.named_parameters():
         try:
@@ -103,7 +103,7 @@ def data_partition(fname):
     User = defaultdict(list)
 
     print("Preparing data...")
-    f = open("../ML/data/%s.txt" % fname, "r")
+    f = open("ML/data/%s.txt" % fname, "r")
     time_set = set()
 
     user_count = defaultdict(int)
@@ -120,7 +120,7 @@ def data_partition(fname):
         item_count[i] += 1
 
     f.close()
-    f = open("../ML/data/%s.txt" % fname, "r")  # try?...ugly data pre-processing code
+    f = open("ML/data/%s.txt" % fname, "r")  # try?...ugly data pre-processing code
     for line in f:
         try:
             u, i, timestamp = line.rstrip().split("\t")
@@ -147,7 +147,7 @@ def data_partition(fname):
     return [User, usernum, itemnum, timenum, item_map, reverse_item_map]
 
 
-def recommend_top5(args, model, user_id, dataset, text_name_dict):
+def tisasrec_recommend_top5(args, model, user_id, dataset, text_name_dict):
 
     User, user_num, item_num, time_num, item_map, reverse_item_map = dataset
     user_sequence = User[user_id]
@@ -178,38 +178,19 @@ def recommend_top5(args, model, user_id, dataset, text_name_dict):
     # print(predictions)
     # print(predictions[50671])
     # Top-5 아이템 인덱스 추출
-    print(len(predictions))
+    # print(len(predictions))
 
     top5_idx = predictions.argsort()
     # print(top5_idx)
     i = 0
     top5_titles = []
+    top5_num = []
     for idx in top5_idx:
         idx2 = reverse_item_map[int(idx.item()) + 1]
+        top5_num.append(idx2)
         if len(top5_titles) == 5:
             break
         if idx2 in text_name_dict["title"]:
             top5_titles.append(text_name_dict["title"][idx2])
 
-    return top5_titles
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", default=200, type=int)
-    parser.add_argument("--lr", default=0.001, type=float)
-    parser.add_argument("--maxlen", default=50, type=int)
-    parser.add_argument("--hidden_units", default=64, type=int)
-    parser.add_argument("--num_blocks", default=2, type=int)
-    parser.add_argument("--num_epochs", default=1000, type=int)
-    parser.add_argument("--num_heads", default=1, type=int)
-    parser.add_argument("--dropout_rate", default=0.2, type=float)
-    parser.add_argument("--l2_emb", default=0.00005, type=float)
-    parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--inference_only", default=False, type=bool)
-    parser.add_argument("--state_dict_path", default=None, type=str)
-    parser.add_argument("--time_span", default=256, type=int)
-    args = parser.parse_args()
-    fname = "Movies_and_TV_Time"
-    dataset = data_partition(fname)
-    model = initialize_model()
+    return top5_titles, top5_num
