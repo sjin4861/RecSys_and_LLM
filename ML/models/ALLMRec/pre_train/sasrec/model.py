@@ -105,10 +105,33 @@ class SASRec(torch.nn.Module):
         log_feats = self.last_layernorm(seqs)
         return log_feats
 
-    def forward(self, log_seqs):
+    def forward(self, user_ids, log_seqs, pos_seqs=None, neg_seqs=None, mode="default"):
         log_feats = self.log2feats(log_seqs)
-        log_feats = log_feats[:, -1, :]
-        return log_feats
+        if mode == "log_only":
+            log_feats = log_feats[:, -1, :]
+            return log_feats
+
+        # log_seqs는 사용자의 과거 상호작용 시퀀스 -> 순서, 상호작용 패턴을 학습한다
+        # pos_embs, neg_embs는 log_feats와 달리 시퀀스의 관계를 학습할 필요가 없다. 이들의 역할은 단순히 유사도를 계산하는 데 필요한 비교 대상
+        pos_embs = self.item_emb(torch.LongTensor(pos_seqs).to(self.dev))
+        neg_embs = self.item_emb(torch.LongTensor(neg_seqs).to(self.dev))
+
+        # 유사도 계산
+        pos_logits = (log_feats * pos_embs).sum(
+            dim=-1
+        )  # 마지막 차원을 전부 합산해 차원을 없앤다.
+        neg_logits = (log_feats * neg_embs).sum(dim=-1)
+
+        # pos_pred = self.pos_sigmoid(pos_logits)
+        # neg_pred = self.neg_sigmoid(neg_logits)
+        if mode == "item":
+            return (
+                log_feats.reshape(-1, log_feats.shape[2]),
+                pos_embs.reshape(-1, log_feats.shape[2]),
+                neg_embs.reshape(-1, log_feats.shape[2]),
+            )
+        else:
+            return pos_logits, neg_logits
 
     def predict(self, user_ids, log_seqs, item_indices):
         log_feats = self.log2feats(log_seqs)
