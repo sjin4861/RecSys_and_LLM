@@ -33,13 +33,23 @@ class A_llmrec_model(nn.Module):
         rec_pre_trained_data = args.rec_pre_trained_data
         self.args = args
         self.device = args.device
-        self.cold_items = args.cold_items
-        self.missing_items = args.missing_items
+        # self.cold_items = args.cold_items
+        # self.missing_items = args.missing_items
 
         with open(
             f"./ML/data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
         ) as ft:
             self.text_name_dict = pickle.load(ft)
+
+        # for TEST
+        self.missing_items = get_missing(self.text_name_dict["title"])
+        self.cold_items = find_cold(
+            load_data(
+                self.args.rec_pre_trained_data,
+                self.args.maxlen,
+                path=f"./ML/data/amazon/{self.args.rec_pre_trained_data}.txt",
+            )
+        )
 
         # pre_trained 모델 불러오기
         self.recsys = RecSys(args.recsys, rec_pre_trained_data, self.device)
@@ -160,7 +170,9 @@ class A_llmrec_model(nn.Module):
         elif not title_flag and description_flag:
             return [f'"{self.text_name_dict[d].get(i,d_)}"' for i in item]
 
-    def find_item_text_single(self, item, title_flag=True, description_flag=True):
+    def find_item_text_single(
+        self, item, title_flag=True, description_flag=True, mode=None
+    ):
         t = "title"
         d = "description"
         t_ = "No Title"
@@ -168,7 +180,11 @@ class A_llmrec_model(nn.Module):
         if title_flag and description_flag:
             return f'"{self.text_name_dict[t].get(item,t_)}, {self.text_name_dict[d].get(item,d_)}"'
         elif title_flag and not description_flag:
-            return f'"{self.text_name_dict[t].get(item,t_)}(ID: {item})"'
+            if mode == "inference":
+                return f'"{self.text_name_dict[t].get(item,t_)}(ID: {item})"'
+            else:
+                return f'"{self.text_name_dict[t].get(item,t_)}"'
+
         elif not title_flag and description_flag:
             return f'"{self.text_name_dict[d].get(item,d_)}"'
 
@@ -381,13 +397,16 @@ class A_llmrec_model(nn.Module):
 
         # candidate_ids에 neg_item_id(랜덤 생성)를 넣는다,,,,, -> historical & user-representation을 결합한 벡터와 유사한 아이템을 넣을 순 없나
         for neg_candidate in neg_item_id[: candidate_num - 1]:
-            candidate_text.append(
-                self.find_item_text_single(
-                    neg_candidate, title_flag=True, description_flag=False
+            if neg_candidate not in self.missing_items:
+                candidate_text.append(
+                    self.find_item_text_single(
+                        neg_candidate, title_flag=True, description_flag=False
+                    )
+                    + "[CandidateEmb]"
                 )
-                + "[CandidateEmb]"
-            )
-            candidate_ids.append(neg_candidate)
+                candidate_ids.append(neg_candidate)
+            else:
+                continue
 
         random_ = np.random.permutation(len(candidate_text))
         candidate_text = np.array(candidate_text)[random_]
@@ -407,7 +426,7 @@ class A_llmrec_model(nn.Module):
         ]
         for candidate in candidate_ids:
             title = self.find_item_text_single(
-                candidate, title_flag=True, description_flag=False
+                candidate, title_flag=True, description_flag=False, mode="inference"
             )
             candidate_text.append(title + "[CandidateEmb]")
 
@@ -520,13 +539,8 @@ class A_llmrec_model(nn.Module):
                     seq[i][seq[i] > 0], 10
                 )
                 candidate_num = 20
-                # candidate_text, candidate_ids = self.make_candidate_text(seq[i][seq[i]>0], candidate_num, target_item_id, target_item_title)
-
-                # breakpoint()
-                history = seq[i][seq[i] > 0]
-                history = np.append(history, target_item_id)
-                candidate_text, candidate_ids = self.make_candidate_text2(
-                    history, candidate_num
+                candidate_text, candidate_ids = self.make_candidate_text(
+                    seq[i][seq[i] > 0], candidate_num, target_item_id, target_item_title
                 )
 
                 input_text = ""
@@ -603,6 +617,7 @@ class A_llmrec_model(nn.Module):
                     repetition_penalty=1.5,
                     length_penalty=1,
                     num_return_sequences=1,
+                    max_new_tokens=512,
                 )
 
             outputs[outputs == 0] = 2  # convert output id 0 to 2 (eos_token_id)
@@ -612,7 +627,7 @@ class A_llmrec_model(nn.Module):
             output_text = [text.strip() for text in output_text]
 
         for i in range(len(text_input)):
-            f = open(f"./recommendation_output.txt", "a")
+            f = open(f"./ML/models/ALLMRec/evaluation/recommendation_output.txt", "a")
             f.write(text_input[i])
             f.write("\n\n")
 
@@ -632,7 +647,7 @@ class A_llmrec_model(nn.Module):
         interact_embs = []
         candidate_embs = []
         with torch.no_grad():
-            log_emb = self.recsys.model(seq)
+            log_emb = self.recsys.model(seq, mode="log_only")
 
             interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
 
