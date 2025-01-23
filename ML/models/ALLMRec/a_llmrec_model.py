@@ -140,6 +140,13 @@ class A_llmrec_model(nn.Module):
         for name, param in self.mlp2.named_parameters():
             param.requires_grad = False
 
+        # SBERT model load
+        sbert = torch.load(out_dir + "sbert.pt", map_location=args.device)
+        self.sbert.load_state_dict(sbert)
+        del sbert
+        for name, param in self.sbert.named_parameters():
+            param.requires_grad = False
+
         if args.inference:
             out_dir += f"{args.llm}_{phase2_epoch}_"
 
@@ -574,10 +581,10 @@ class A_llmrec_model(nn.Module):
                 text_input.append(input_text)
 
                 interact_embs.append(
-                    self.item_emb_proj(self.get_item_emb(interact_ids))
+                    self.item_emb_proj(self.get_item_emb(interact_ids, mode="cold"))
                 )
                 candidate_embs.append(
-                    self.item_emb_proj(self.get_item_emb(candidate_ids))
+                    self.item_emb_proj(self.get_item_emb(candidate_ids, mode="cold"))
                 )
 
         log_emb = self.log_emb_proj(log_emb)
@@ -611,7 +618,7 @@ class A_llmrec_model(nn.Module):
                     top_p=0.9,
                     temperature=1,
                     num_beams=1,
-                    max_length=512,
+                    # max_length=512,
                     min_length=1,
                     pad_token_id=self.llm.llm_tokenizer.eos_token_id,
                     repetition_penalty=1.5,
@@ -627,7 +634,10 @@ class A_llmrec_model(nn.Module):
             output_text = [text.strip() for text in output_text]
 
         for i in range(len(text_input)):
-            f = open(f"./ML/models/ALLMRec/evaluation/recommendation_output.txt", "a")
+            f = open(
+                f"./ML/models/ALLMRec/evaluation/recommendation_sbert_output_35.txt",
+                "a",
+            )
             f.write(text_input[i])
             f.write("\n\n")
 
