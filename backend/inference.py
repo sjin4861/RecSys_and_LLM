@@ -164,7 +164,7 @@ class ModelManager:
             state_dict_path="ML/models/saved_models/gsasrec-Movies_and_TV-step=326197.pt",
             device="cuda:0",
         )
-        # self._load_models()
+        self._load_models()
 
     """
     def test_data(self):
@@ -177,10 +177,10 @@ class ModelManager:
         self.gsasrec_model.to(self.gsasrec_args.device)
         self.gsasrec_model.load_state_dict(torch.load(self.gsasrec_args.state_dict_path))
         self.gsasrec_model.eval()
-        a, b = gsasrec_recommend_top5(self.gsasrec_model, self.tisasrec_dataset, 978, self.gsasrec_args, text_name_dict)
+        a, b = gsasrec_recommend_top5(self.gsasrec_model, self.tisasrec_dataset, 978, self.gsasrec_args, text_name_dict,)
         print(a)
         print(b)
-        """
+    """
 
     def _load_models(self):
         """모델 및 데이터 로드 로직"""
@@ -256,7 +256,7 @@ class ModelManager:
         print(allmrec_prediction)
 
         # TiSASRec
-        tisasrec_tok5_title, tisasrec_tok5_num = tisasrec_recommend_top5(
+        tisasrec_tok5_title, tisasrec_prediction = tisasrec_recommend_top5(
             self.tisasrec_args,
             self.tisasrec_model,
             user_id,
@@ -265,15 +265,17 @@ class ModelManager:
         )
 
         # gSASRec
-        gsasrec_tok5_title, gsasrec_tok5_num = gsasrec_recommend_top5(
+        gsasrec_tok5_title, gsasrec_prediction = gsasrec_recommend_top5(
             self.gsasrec_model,
             self.tisasrec_dataset,
-            978,
+            user_id,
             self.gsasrec_args,
-            text_name_dict,
+            self.expected_dict,
         )
 
         return {
             "lgcn_predictions": lgcn_predictions,
             "allmrec_prediction": allmrec_prediction,
+            "gsasrec_prediction": gsasrec_prediction,
+            "tisasrec_prediction": tisasrec_prediction,
         }
