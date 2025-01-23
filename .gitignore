@@ -2,5 +2,5 @@ __pycache__
 .vscode
 /ML/data
 /ML/models/saved_models/*
-/ML/models/ALLMRec/evaluatuon/*.txt
+/ML/models/ALLMRec/evaluation/*.txt
 /backend/models
