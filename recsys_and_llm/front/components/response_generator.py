@@ -1,8 +1,12 @@
 # app/components/response_generator.py
 
 
-def get_unicrs_response(user_message: str, pipeline) -> str:
+def get_unicrs_response(user_message: str, dialog: list, pipeline) -> str:
     """
     주어진 파이프라인으로 사용자 메시지에 대한 응답 생성.
     """
-    return f"안녕하세요! 요청하신 내용에 대한 추천을 드릴게요. (파이프라인: {pipeline})"
+    dialog.append(f"User: {user_message}")
+    full_context = "<sep>".join(dialog)
+    response = pipeline.response(full_context)
+    dialog.append(f"System: {response}")
+    return response
