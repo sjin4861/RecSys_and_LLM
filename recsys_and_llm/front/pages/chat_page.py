@@ -1,7 +1,11 @@
 # pages/chat_page.py
 
 import streamlit as st  # type: ignore
-from front.components.conversation_manager import load_conversation, save_conversation
+from front.components.conversation_manager import (
+    load_conversation,
+    persist_conversation,
+    save_conversation,
+)
 from front.components.pipeline_manager import set_pipeline
 from front.components.response_generator import get_unicrs_response
 from front.utils.session_utils import (
@@ -36,12 +40,15 @@ def main():
     initialize_pipeline(set_pipeline("", "UniCRS_REC", "UniCRS_GEN"))
     initialize_feedback_submitted()
 
+    if "dialog" not in st.session_state:
+        st.session_state.dialog = []
+
     # -------------------------------------------------------
     # (A) 상단 - "모델 선택"을 가장 먼저(최상단) 배치
     # -------------------------------------------------------
     st.markdown("## UniCRS 대화형 추천 테스트")  # 혹은 st.header("모델 선택")
     model_options = {
-        "UniCRS (기본)": "",
+        "UniCRS (기본)": "default",
         "FillBlank": "blank",
         "Expansion": "expansion",
         "GPT": "gpt",
@@ -50,9 +57,8 @@ def main():
         label="", options=list(model_options.keys()), index=0
     )
     chosen_flag = model_options[selected_model_label]
-    st.session_state.pipeline = set_pipeline(
-        chosen_flag, "UniCRS_REC", "GPT_GEN" if chosen_flag == "gpt" else "UniCRS_GEN"
-    )
+    # st.session_state.pipeline = set_pipeline(chosen_flag, "UniCRS_REC", "UniCRS_GEN")
+    st.session_state.pipeline = set_pipeline(chosen_flag)
 
     # -------------------------------------------------------
     # 상단 버튼들 (오른쪽 정렬)
@@ -62,10 +68,6 @@ def main():
 
     # 상단 버튼들
     # st.markdown('<div class="top-right-buttons">', unsafe_allow_html=True)
-
-    # (A1) 메인 페이지 버튼
-    # if st.button("메인 페이지로 돌아가기"):
-    #     st.switch_page("pages/main_page.py")
 
     # (A2) "저장된 대화 세션 불러오기"
     st.markdown("#### 저장된 대화 불러오기")
@@ -77,10 +79,7 @@ def main():
             "불러올 세션", saved_titles, key="load_session_select"
         )
         if st.button("불러오기", key="load_convo_button"):
-            st.session_state.conversations = st.session_state.saved_conversations[
-                chosen_session
-            ].copy()
-            st.success(f"'{chosen_session}' 대화를 불러왔습니다.")
+            st.info(load_conversation(chosen_session))
     st.markdown("</div>", unsafe_allow_html=True)
 
     # -------------------------------------------------------
@@ -92,13 +91,10 @@ def main():
             new_title = st.text_input("대화 세션 제목을 입력하세요.")
             submitted = st.form_submit_button("저장하기")
             if submitted:
-                if new_title.strip():
-                    st.session_state.saved_conversations[new_title] = (
-                        st.session_state.conversations.copy()
-                    )
-                    st.success(f"'{new_title}' 대화를 저장했습니다!")
-                else:
-                    st.info("세션 제목이 비어있어 저장을 취소했습니다.")
+                st.info(save_conversation(new_title))
+                persist_conversation(
+                    st.session_state.user_id
+                )  # <<< 저장시점에 파일로도 기록
 
     st.write("---")
 
@@ -107,10 +103,10 @@ def main():
     # -------------------------------------------------------
     user_message = st.chat_input("원하는 영화를 찾지 못했나요? UniCRS와 대화해보세요!")
     if user_message:
-        # 사용자 메시지
+        response = get_unicrs_response(
+            user_message, st.session_state.dialog, st.session_state.pipeline
+        )
         st.session_state.conversations.append({"role": "user", "content": user_message})
-        # 모델 응답
-        response = get_unicrs_response(user_message, st.session_state.pipeline)
         st.session_state.conversations.append(
             {"role": "assistant", "content": response}
         )
