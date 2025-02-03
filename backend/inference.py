@@ -1,5 +1,8 @@
 import argparse
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pickle
 import random
 import time
@@ -20,7 +23,9 @@ from tqdm import tqdm
 
 from ML.models.ALLMRec.a_llmrec_model import *
 from ML.models.ALLMRec.pre_train.sasrec.utils import *
+from ML.models.gSASRec.gsasrec_inference import *
 from ML.models.LGCN.model import MLGCN
+from ML.models.TiSASRec.TiSASRec_inference import *
 from ML.utils import get_missing
 
 
@@ -106,9 +111,14 @@ class ModelManager:
         """모델 및 데이터 로드"""
         self.allmrec_model = None
         self.lgcn_model = None
+        self.tisasrec_model = None
+        self.gsasrec_model = None
         self.expected_dict = None
         self.lgcn_dataset = None
+        self.tisasrec_dataset = None
+        self.gsasrec_dataset = None
         self.allmrec_dataset = None
+        
         self.missing_list = None
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
@@ -128,7 +138,51 @@ class ModelManager:
             stage2_lr=0.0001,  # 단계 2 학습률
             device="cuda:0",  # 디바이스 설정
         )
+        self.tisasrec_args = Namespace(
+            dataset="Movies_and_TV_Time",
+            batch_size=200,
+            lr=0.001,
+            maxlen=50,
+            hidden_units=64,
+            num_blocks=2,
+            num_epochs=1000,
+            num_heads=1,
+            dropout_rate=0.2,
+            l2_emb=0.00005,
+            device="cuda:0",
+            time_span=256,
+            state_dict_path="ML/models/saved_models/TiSASRec_model_epoch_1000.pt",
+        )
+        self.gsasrec_args = Namespace(
+            dataset_name="Movies_and_TV",
+            sequence_length=100,
+            embedding_dim=64,
+            num_heads=1,
+            max_batches_per_epoch=500,
+            num_blocks=2,
+            dropout_rate=0.5,
+            negs_per_pos=256,
+            gbce_t=0.75,
+            state_dict_path="ML/models/saved_models/gsasrec-Movies_and_TV-step=326197.pt",
+            device="cuda:0",
+        )
         self._load_models()
+
+    """
+    def test_data(self):
+        with open(f'ML/data/Movies_and_TV_text_name_dict.json.gz','rb') as ft:
+            text_name_dict = pickle.load(ft)
+        self.tisasrec_dataset = data_partition(self.tisasrec_args.dataset)
+        User, usernum, itemnum, timenum, item_map, reverse_item_map = self.tisasrec_dataset
+        #print(itemnum)
+        self.gsasrec_model = build_model(self.gsasrec_args, itemnum)
+        self.gsasrec_model.to(self.gsasrec_args.device)
+        self.gsasrec_model.load_state_dict(torch.load(self.gsasrec_args.state_dict_path))
+        self.gsasrec_model.eval()
+        a, b = gsasrec_recommend_top5(self.gsasrec_model, self.tisasrec_dataset, 978, self.gsasrec_args, text_name_dict,)
+        print(a)
+        print(b)
+    """
 
     def _load_models(self):
         """모델 및 데이터 로드 로직"""
@@ -156,6 +210,37 @@ class ModelManager:
         )
         self.allmrec_model.eval()
 
+        # Load LGCN Model and Dataset
+        self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
+        self.missing_list = get_missing(self.expected_dict)
+
+        # Load TiSASRec and Dataset
+        self.tisasrec_dataset = data_partition(self.tisasrec_args.dataset)
+        User, usernum, itemnum, timenum, item_map, reverse_item_map = (
+            self.tisasrec_dataset
+        )
+        self.tisasrec_model = tisasrec_initialize_model(
+            self.tisasrec_args, usernum, itemnum
+        )
+        self.tisasrec_model.load_state_dict(
+            torch.load(self.tisasrec_args.state_dict_path)
+        )
+        self.tisasrec_model.eval()
+        self.gsasrec_model = build_model(self.gsasrec_args, itemnum)
+        self.gsasrec_model.to(self.gsasrec_args.device)
+        self.gsasrec_model.load_state_dict(
+            torch.load(self.gsasrec_args.state_dict_path)
+        )
+        self.gsasrec_model.eval()
+        # Load gSASRec and Dataset
+        self.gsasrec_model = build_model(self.gsasrec_args, itemnum)
+        self.gsasrec_model.to(self.gsasrec_args.device)
+        self.gsasrec_model.load_state_dict(
+            torch.load(self.gsasrec_args.state_dict_path)
+        )
+        self.gsasrec_model.eval()
+
+
     def inference(self, user_id):
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
@@ -179,7 +264,27 @@ class ModelManager:
 
         print(allmrec_prediction)
 
+        # TiSASRec
+        tisasrec_tok5_title, tisasrec_prediction = tisasrec_recommend_top5(
+            self.tisasrec_args,
+            self.tisasrec_model,
+            user_id,
+            self.tisasrec_dataset,
+            self.expected_dict,
+        )
+
+        # gSASRec
+        gsasrec_tok5_title, gsasrec_prediction = gsasrec_recommend_top5(
+            self.gsasrec_model,
+            self.tisasrec_dataset,
+            user_id,
+            self.gsasrec_args,
+            self.expected_dict,
+        )
+
         return {
             "lgcn_predictions": lgcn_predictions,
             "allmrec_prediction": allmrec_prediction,
+            "gsasrec_prediction": gsasrec_prediction,
+            "tisasrec_prediction": tisasrec_prediction,
         }
