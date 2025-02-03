@@ -117,6 +117,8 @@ class ModelManager:
         self.lgcn_dataset = None
         self.tisasrec_dataset = None
         self.gsasrec_dataset = None
+        self.allmrec_dataset = None
+        
         self.missing_list = None
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
@@ -124,9 +126,9 @@ class ModelManager:
             llm="opt",  # LLM 모델 선택
             recsys="sasrec",  # RecSys 모델 선택
             rec_pre_trained_data="Movies_and_TV",  # 데이터셋 설정
-            pretrain_stage1=False,  # Pretrain 단계 1 활성화
-            pretrain_stage2=False,  # Pretrain 단계 2 비활성화
-            inference=True,  # Inference 비활성화
+            pretrain_stage1=False,
+            pretrain_stage2=False,
+            inference=True,
             batch_size1=32,  # 단계 1 배치 크기
             batch_size2=2,  # 단계 2 배치 크기
             batch_size_infer=2,  # 추론 배치 크기
@@ -184,7 +186,19 @@ class ModelManager:
 
     def _load_models(self):
         """모델 및 데이터 로드 로직"""
-        # Load ALLMRec Model
+        # Load LGCN Model and Dataset
+        self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
+        self.missing_list = get_missing(self.expected_dict)
+
+        # Load A-LLMRec Model and dataset
+        self.allmrec_dataset = load_data(
+            self.llmrec_args.rec_pre_trained_data,
+            self.llmrec_args.maxlen,
+            path=f"./ML/data/amazon/{self.llmrec_args.rec_pre_trained_data}.txt",
+        )
+        cold_items = find_cold(self.allmrec_dataset)
+        self.llmrec_args.cold_items = cold_items
+        self.llmrec_args.missing_items = self.missing_list
 
         self.allmrec_model = A_llmrec_model(self.llmrec_args).to(
             self.llmrec_args.device
@@ -226,10 +240,10 @@ class ModelManager:
         )
         self.gsasrec_model.eval()
 
+
     def inference(self, user_id):
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
-        lgcn_predictions = "no"
         lgcn_predictions = predict(
             str(user_id),
             self.expected_dict,
@@ -240,12 +254,7 @@ class ModelManager:
         lgcn_predictions = "\n".join(lgcn_predictions)
 
         # ALLMRec 모델 기반 예측
-        dataset = load_data(
-            self.allmrec_model.args.rec_pre_trained_data,
-            self.llmrec_args.maxlen,
-            path=f"./ML/data/amazon/{self.allmrec_model.args.rec_pre_trained_data}.txt",
-        )
-        [data, usernum, itemnum] = dataset
+        [data, usernum, itemnum] = self.allmrec_dataset
 
         if user_id <= 0 or user_id > usernum:
             return {"error": "Invalid user_id"}
