@@ -46,7 +46,7 @@ poetry --version
 프로젝트를 로컬 머신에 클론합니다:
 
 ```bash
-git clone https://github.com/yourusername/RecSys_and_LLM.git
+git clone https://github.com/PNUDI/RecSys_and_LLM.git
 cd RecSys_and_LLM
 ```
 
@@ -90,7 +90,7 @@ poetry install
 가상 환경이 활성화된 상태에서 다음과 같이 프로젝트를 실행할 수 있습니다:
 
 ```bash
-python recsys_and_llm/front/app.py
+poetry run streamlit run recsys_and_llm\front\app.py
 ```
 
 ---
