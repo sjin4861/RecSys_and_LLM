@@ -111,11 +111,18 @@ def main():
                 # 다양한 피드백 이모티콘 (한 번 제출 시 모두 숨김)
                 if not st.session_state.feedback_submitted.get(idx, False):
                     feedback_options = [
-                        ("👍", "good"),
-                        ("👎", "bad"),
-                        ("🐞", "bug"),
-                        ("💡", "idea"),
-                        ("❓", "question"),
+                        ("👍 good recommendation", "good recommendation"),
+                        ("🌟 interesting", "interesting"),
+                        (
+                            "🤝 realistic",
+                            "realistic",
+                        ),  # 실제 대화하는 느낌 + 긍정적인 감정
+                        ("👎 bad recommendation", "bad recommendation"),
+                        ("😴 boring", "boring"),
+                        (
+                            "🤖 unnatural",
+                            "unnatural",
+                        ),  # 너무 AI스럽거나 부자연스러운 응답
                     ]
                     feedback_cols = st.columns(len(feedback_options), gap="small")
                     for col, (icon, feedback_type) in zip(
