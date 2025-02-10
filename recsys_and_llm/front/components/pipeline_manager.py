@@ -11,6 +11,7 @@ from recwizard import (
     RedialRec,
     UnicrsGen,
     UnicrsRec,
+    ChatgptRec,
 )
 
 load_dotenv()
@@ -19,14 +20,13 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 custom_prompt = {
     "role": "system",
     "content": """
-    당신은 사용자에게 영화를 추천하는 시스템입니다. 
-    반드시 영어로 답변해야 하며, 
-    **5개의** 추천 영화를 제시해야 합니다.
-    답변의 출력 형식은 
-    **영화제목(개봉연도)으로 제한합니다. 그 외의 내용(기호, 특수문자, 기타 용어 등)은 작성하지 마세요.**
-    **하지만, 사용자가 추천 이유나 추천 영화에 관한 정보를 물어 볼 때에는 예외로 합니다.**
-    사용자의 선호에 관한 정보(배우, 감독, 장르) 등이 부족할 경우, 필요한 만큼 대화를 이어 나갈 수 있습니다.
-    사용자가 대화 종료 신호를 보일 경우, 적절한 인삿말로 대화를 마무리하세요.
+    You are a system that recommends movies to users.
+    You must answer in English,
+    In the answer, the output format of Entity is
+    **Limited to the movie title (opening year). **
+    **However, exceptions are made when users ask for recommendation reasons or information about recommended movies.**
+    If you lack information about your preferences (actors, directors, genres), etc., you can continue the conversation as much as you need.
+    If the user shows signs of starting or ending the conversation, end the conversation with an appropriate greeting.
     """
 }
 
