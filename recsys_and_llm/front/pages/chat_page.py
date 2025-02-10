@@ -113,23 +113,21 @@ def main():
                     feedback_options = [
                         ("👍 good recommendation", "good recommendation"),
                         ("🌟 interesting", "interesting"),
-                        (
-                            "🤝 realistic",
-                            "realistic",
-                        ),  # 실제 대화하는 느낌 + 긍정적인 감정
+                        ("🤝 realistic", "realistic"),
                         ("👎 bad recommendation", "bad recommendation"),
                         ("😴 boring", "boring"),
-                        (
-                            "🤖 unnatural",
-                            "unnatural",
-                        ),  # 너무 AI스럽거나 부자연스러운 응답
+                        ("🤖 unnatural", "unnatural"),
                     ]
                     feedback_cols = st.columns(len(feedback_options), gap="small")
                     for col, (icon, feedback_type) in zip(
                         feedback_cols, feedback_options
                     ):
                         with col:
-                            if st.button(icon, key=f"feedback_{feedback_type}_{idx}"):
+                            if st.button(
+                                icon,
+                                key=f"feedback_{feedback_type}_{idx}",
+                                use_container_width=True,
+                            ):
                                 st.toast(f"'{feedback_type}' 피드백을 기록했습니다.")
                                 st.session_state.feedback_submitted[idx] = True
         else:
