@@ -1,5 +1,7 @@
 # pages/chat_page.py
 
+from datetime import datetime
+
 import streamlit as st  # type: ignore
 from front.components.conversation_manager import (
     load_conversation,
@@ -95,9 +97,17 @@ def main():
             response = get_unicrs_response(
                 user_message, st.session_state.dialog, st.session_state.pipeline
             )
-        st.session_state.conversations.append({"role": "user", "content": user_message})
+        current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         st.session_state.conversations.append(
-            {"role": "assistant", "content": response}
+            {"role": "user", "content": user_message, "date_time": current_time_str}
+        )
+        st.session_state.conversations.append(
+            {
+                "role": "assistant",
+                "content": response,
+                "date_time": current_time_str,
+                "feedback": "None",
+            }
         )
 
     # ----------------------------------------------------------------
@@ -130,6 +140,11 @@ def main():
                             ):
                                 st.toast(f"'{feedback_type}' 피드백을 기록했습니다.")
                                 st.session_state.feedback_submitted[idx] = True
+                                # 피드백 기록 (default: None)
+                                st.session_state.conversations[idx][
+                                    "feedback"
+                                ] = feedback_type
+
         else:
             # 사용자 메시지: 오른쪽에 아바타 (CSS로 정렬 반전)
             with st.chat_message("user", avatar="👤"):
