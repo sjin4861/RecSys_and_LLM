@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from recwizard import (
     ChatgptGen,
+    ChatgptRec,
     ExpansionConfig,
     ExpansionPipeline,
     FillBlankConfig,
@@ -34,21 +35,21 @@ custom_prompt = {
 # Recommendation #
 ##################
 unicrs_rec = UnicrsRec.from_pretrained("recwizard/unicrs-rec-redial")
-redial_rec = RedialRec.from_pretrained('recwizard/redial-rec')
-gpt_rec_fillblank = ChatgptRec.from_pretrained('recwizard/chatgpt-rec-fillblank')
+redial_rec = RedialRec.from_pretrained("recwizard/redial-rec")
+gpt_rec_fillblank = ChatgptRec.from_pretrained("recwizard/chatgpt-rec-fillblank")
 ##################
 #   Generation   #
 ##################
 unicrs_gen = UnicrsGen.from_pretrained("recwizard/unicrs-gen-redial")
 gpt_gen_expansion = ChatgptGen.from_pretrained(
-    model_name='gpt-4o',
-    pretrained_model_name_or_path='recwizard/chatgpt-gen-expansion',
-    prompt=custom_prompt
+    model_name="gpt-4o",
+    pretrained_model_name_or_path="recwizard/chatgpt-gen-expansion",
+    prompt=custom_prompt,
 )
 gpt_gen_fillblank = ChatgptGen.from_pretrained(
-    model_name='gpt-4o',
-    pretrained_model_name_or_path='recwizard/chatgpt-gen-fillblank',
-    prompt=custom_prompt
+    model_name="gpt-4o",
+    pretrained_model_name_or_path="recwizard/chatgpt-gen-fillblank",
+    prompt=custom_prompt,
 )
 ##################
 # Configurations #
@@ -63,15 +64,21 @@ def set_pipeline(flag, rec_module=unicrs_rec, gen_module=gpt_gen_fillblank):
     """
     if flag.lower() == "blank":
         return FillBlankPipeline(
-            config=FillBlankConfig(), rec_module=redial_rec, gen_module=gpt_gen_fillblank
+            config=FillBlankConfig(),
+            rec_module=redial_rec,
+            gen_module=gpt_gen_fillblank,
         )
     elif flag.lower() == "expansion":
         return ExpansionPipeline(
-            config=ExpansionConfig(), rec_module=unicrs_rec, gen_module=gpt_gen_expansion
+            config=ExpansionConfig(),
+            rec_module=unicrs_rec,
+            gen_module=gpt_gen_expansion,
         )
     elif flag.lower() == "gpt":
         return FillBlankPipeline(
-            config=FillBlankConfig(), rec_module=gpt_rec_fillblank, gen_module=gpt_gen_fillblank
+            config=FillBlankConfig(),
+            rec_module=gpt_rec_fillblank,
+            gen_module=gpt_gen_fillblank,
         )
     elif flag.lower() == "default":
         return FillBlankPipeline(
