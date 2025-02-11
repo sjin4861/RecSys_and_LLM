@@ -85,11 +85,32 @@ Poetry를 설치한 후 `poetry --version`을 실행했을 때 **"command not fo
 이 프로젝트는 **Python 3.10.12 버전**에서 실행됩니다. (2025/02/10 기준)  
 리눅스 서버에서 Poetry가 해당 버전을 사용하도록 설정해야 합니다.
 
-### 5-1. Python 3.10.12 설치 여부 확인
+### 5-1. Python 3.10.12 설치 여부 확인 및 설치 (pyenv 사용)
 ```bash
 python3.10 --version
 ```
-출력이 `Python 3.10.12`가 아니라면, **관리자에게 Python 3.10.12 설치를 요청**해야 합니다.
+출력이 `Python 3.10.12`가 아니라면, `Python`이 올바르게 설치되지 않았거나 경로가 설정되지 않았을 수 있습니다. 
+
+#### Linux에서 Python 3.10.12 설치
+
+`Python 3.10.12`를 설치하려면 두 가지 방법 - **pyenv 또는 sudo (관리자 권한 필요)** - 이 있습니다. 
+
+**1. pyenv 설치** (권장, 관리자 권한 없이 가능)
+```bash
+curl https://pyenv.run | bash
+```
+**2. 환경 변수 추가**
+```bash
+echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init --path)"' >> ~/.bashrc
+echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**3. Python 3.10.12 설치 및 기본 버전 설정**
+```bash
+PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install 3.10.12
+```
 
 ### 5-2. 기존 잘못된 Poetry 가상 환경 제거
 Poetry가 다른 버전의 Python을 사용하고 있다면, 기존 가상 환경을 삭제합니다.
@@ -106,7 +127,7 @@ which python3.10  # Python 3.10.12의 경로 확인
 poetry env use $(which python3.10)  # 해당 경로로 가상 환경 설정
 ```
 
-설정된 가상 환경 확인:
+설정된 가상 환경 확인 & 예시 사진:
 
 ```bash
 poetry env info
@@ -137,7 +158,7 @@ poetry install
 
 ---
 
-## 7. Pre-commit 훅 설정
+## 7. Pre-commit 훅 설정 (develop)
 
 코드 스타일과 포맷팅을 유지하기 위해 `pre-commit`을 설정합니다:
 
@@ -163,7 +184,7 @@ poetry install
 
 ## 8. 프로젝트 실행
 
-**🥳 축하합니다!**  
+**🥳 축하합니다!**  긴 과정을 따라오느라 고생 많으셨습니다.  
 이제 가상 환경이 활성화된 상태에서 **다음과 같이 프로젝트를 실행**할 수 있습니다:
 
 ```bash
@@ -188,5 +209,5 @@ poetry run streamlit run recsys_and_llm/front/app.py
 ## B. 참고 사항 ⚠️
 
 - 모든 의존성은 `poetry`를 통해 관리됩니다. **`pip`을 사용하여 패키지를 직접 설치하지 마세요.**
-- 원활한 설정을 위해 **`poetry`가 전역적으로 설치되어 있는지 확인**하세요. (위에서 설명한 방식을 따랐다면, 높은 확률로 전역적으로 설치되어 있을 것입니다.)
+- 원활한 설정을 위해 **`poetry`가 전역적으로 설치되어 있는지 확인**하세요.  (위에서 설명한 방식을 따랐다면, 높은 확률로 괜찮을 것입니다.)
 
