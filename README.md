@@ -135,7 +135,7 @@ poetry run streamlit run recsys_and_llm\front\app.py
 
 ### A. 문제 해결 🛠️
 
-- **`pre-commit`**** 훅 또는 환경 관련 문제 발생 시**:
+- **`pre-commit` 훅 또는 환경 관련 문제 발생 시**:
 
   ```bash
   poetry run pre-commit clean
