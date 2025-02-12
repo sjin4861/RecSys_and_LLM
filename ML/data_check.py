@@ -2,9 +2,14 @@ import pickle
 from collections import Counter, defaultdict
 
 import matplotlib.pyplot as plt
+from pymongo import MongoClient
 
-with open(f"./data/amazon/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
-    text_name_dict = pickle.load(ft)
+MONGO_URI = "mongodb://localhost:27017/"
+
+client = MongoClient(MONGO_URI)
+db = client["items"]
+user = db["user"]
+item = db["item"]
 
 
 def load_data(fname, max_len, path=None):
@@ -130,13 +135,13 @@ def find_first_user_with_cold_items(dataset, cold_items):
 #     1,
 #     86678,
 # )
-dataset, all_dataset = load_data("Movies_and_TV", 50)
-# users_with_missing = find_users_with_missing_items(dataset, missing)
+# dataset, all_dataset = load_data("Movies_and_TV", 50)
+# # users_with_missing = find_users_with_missing_items(dataset, missing)
 
-w, c = warm_and_cold(dataset)
+# w, c = warm_and_cold(dataset)
 
-cold_item_included_users = find_first_user_with_cold_items(dataset, c)
-print(cold_item_included_users)
+# cold_item_included_users = find_first_user_with_cold_items(dataset, c)
+# print(cold_item_included_users)
 
 # 결과 출력
 # print(len(list(users_with_missing.keys())))
@@ -145,3 +150,7 @@ print(cold_item_included_users)
 # print(users_with_missing[117])
 # print()
 # print(dataset[117])
+
+print("📌 Items Collection:")
+for doc in item.find().limit(5):  # 첫 5개 문서 출력
+    print(doc)

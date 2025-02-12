@@ -8,8 +8,8 @@ from sentence_transformers import SentenceTransformer
 from torch.cuda.amp import autocast as autocast
 
 from ML.models.ALLMRec.llm4rec import *
-from ML.models.ALLMRec.pre_train.sasrec.utils import *
 from ML.models.ALLMRec.recsys_model import *
+from ML.utils import *
 
 
 class two_layer_mlp(nn.Module):
