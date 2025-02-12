@@ -33,23 +33,9 @@ class A_llmrec_model(nn.Module):
         rec_pre_trained_data = args.rec_pre_trained_data
         self.args = args
         self.device = args.device
-        # self.cold_items = args.cold_items
-        # self.missing_items = args.missing_items
-
-        with open(
-            f"./ML/data/amazon/{args.rec_pre_trained_data}_text_name_dict.json.gz", "rb"
-        ) as ft:
-            self.text_name_dict = pickle.load(ft)
-
-        # for TEST
-        self.missing_items = get_missing(self.text_name_dict["title"])
-        self.cold_items = find_cold(
-            load_data(
-                self.args.rec_pre_trained_data,
-                self.args.maxlen,
-                path=f"./ML/data/amazon/{self.args.rec_pre_trained_data}.txt",
-            )
-        )
+        self.cold_items = args.cold_items
+        self.missing_items = args.missing_items
+        self.text_name_dict = args.text_name_dict
 
         # pre_trained 모델 불러오기
         self.recsys = RecSys(args.recsys, rec_pre_trained_data, self.device)
@@ -651,7 +637,7 @@ class A_llmrec_model(nn.Module):
         return output_text
 
     def inference(self, data):
-        u, seq = data
+        seq = data
 
         text_input = []
         interact_embs = []
