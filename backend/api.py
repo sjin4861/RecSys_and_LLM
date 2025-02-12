@@ -34,7 +34,7 @@ db = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """서버 시작 및 종료 시 실행할 코드"""
-    global model_manager, client, db, user
+    global model_manager, client, db
 
     # MongoDB 연결
     client = MongoClient(MONGO_URI)
@@ -65,6 +65,7 @@ class PredictRequest(BaseModel):
 def predict(
     request: PredictRequest, model: ModelManager = Depends(lambda: model_manager)
 ):
+    user = db["user"]
     user_id = request.user_id
     user_data = user.find_one({"_id": user_id})
 
