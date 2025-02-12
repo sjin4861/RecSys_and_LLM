@@ -207,42 +207,6 @@ def data_partition(fname, path=None):
     return [user_train, user_valid, user_test, usernum, itemnum]
 
 
-def load_data(fname, max_len, path=None):
-    usernum = 0
-    itemnum = 0
-    User = defaultdict(list)
-    data = {}
-
-    # assume user/item index starting from 1
-
-    # f = open('./pre_train/sasrec/data/%s.txt' % fname, 'r')
-    if path == None:
-        f = open("./ML/data/amazon/%s.txt" % fname, "r")
-    else:
-        f = open(path, "r")
-    for line in f:
-        u, i = line.rstrip().split(" ")
-        u = int(u)
-        i = int(i)
-        usernum = max(u, usernum)  # id가 곧 유저의 개수
-        itemnum = max(i, itemnum)
-        User[u].append(i)
-
-    for user in User:
-        seq = [0] * max_len
-        length_idx = max_len - 1
-
-        for i in reversed(User[user][:-1]):
-            seq[length_idx] = i
-            length_idx -= 1
-            if length_idx == -1:
-                break
-
-        data[user] = seq
-
-    return [data, usernum, itemnum]
-
-
 def make_candidate_for_LLM(model, itemnum, log_seq, args):
     seq = np.zeros([args.maxlen], dtype=np.int32)
     idx = args.maxlen - 1
@@ -277,8 +241,24 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     return top_k_items
 
 
-def find_cold(dataset):
-    [data, usernum, itemnum] = dataset
+def find_cold(user_collection, max_len):
+    data = {}
+
+    # db data -> dict
+    for user_data in user_collection.find():
+        user_id = str(user_data["_id"])  # _id를 문자열로 변환
+        itemnums = [
+            item["itemnum"] for item in user_data.get("items", [])
+        ]  # itemnum 리스트 추출
+
+        # 최신 max_len 개수만 유지 (패딩 포함)
+        seq = [0] * max_len
+        recent_items = itemnums[
+            -max_len:
+        ]  # 마지막 아이템을 제외한 최신 max_len개만 유지
+        seq[-len(recent_items) :] = recent_items  # 패딩 포함하여 우측 정렬
+
+        data[user_id] = seq  # 결과 저장
 
     item_interactions = []
     for user, items in data.items():

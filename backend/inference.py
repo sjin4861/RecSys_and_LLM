@@ -106,8 +106,26 @@ def predict(
     ][: topk // 2]
 
 
+def get_text_name_dict(item_collection):
+    text_name_dict = {"title": {}, "description": {}}
+
+    for item in item_collection.find():
+        item_id = str(item["_id"])  # _id를 문자열로 변환
+        title = item.get("title", "No Title")  # 기본값 설정
+        description = item.get("description", ["No Description"])  # 기본값 설정
+
+        # 리스트 타입이면 문자열로 변환
+        if isinstance(description, list):
+            description = " ".join(description) if description else "No Description"
+
+        text_name_dict["title"][item_id] = title
+        text_name_dict["description"][item_id] = description
+
+    return text_name_dict
+
+
 class ModelManager:
-    def __init__(self):
+    def __init__(self, db):
         """모델 및 데이터 로드"""
         self.allmrec_model = None
         self.lgcn_model = None
@@ -117,8 +135,7 @@ class ModelManager:
         self.lgcn_dataset = None
         self.tisasrec_dataset = None
         self.gsasrec_dataset = None
-        self.allmrec_dataset = None
-        
+
         self.missing_list = None
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
@@ -166,7 +183,10 @@ class ModelManager:
             state_dict_path="ML/models/saved_models/gsasrec-Movies_and_TV-step=326197.pt",
             device="cuda:0",
         )
-        self._load_models()
+
+        user_table = db["user"]
+        item_table = db["item"]
+        self._load_models(user_table, item_table)
 
     """
     def test_data(self):
@@ -184,21 +204,15 @@ class ModelManager:
         print(b)
     """
 
-    def _load_models(self):
+    def _load_models(self, user_table, item_table):
         """모델 및 데이터 로드 로직"""
         # Load LGCN Model and Dataset
         self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
         self.missing_list = get_missing(self.expected_dict)
 
-        # Load A-LLMRec Model and dataset
-        self.allmrec_dataset = load_data(
-            self.llmrec_args.rec_pre_trained_data,
-            self.llmrec_args.maxlen,
-            path=f"./ML/data/amazon/{self.llmrec_args.rec_pre_trained_data}.txt",
-        )
-        cold_items = find_cold(self.allmrec_dataset)
-        self.llmrec_args.cold_items = cold_items
+        self.llmrec_args.cold_items = find_cold(user_table, self.llmrec_args.maxlen)
         self.llmrec_args.missing_items = self.missing_list
+        self.llmrec_args.text_name_dict = get_text_name_dict(item_table)
 
         self.allmrec_model = A_llmrec_model(self.llmrec_args).to(
             self.llmrec_args.device
@@ -240,8 +254,7 @@ class ModelManager:
         )
         self.gsasrec_model.eval()
 
-
-    def inference(self, user_id):
+    def inference(self, user_id, seq):
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
         lgcn_predictions = predict(
@@ -254,13 +267,8 @@ class ModelManager:
         lgcn_predictions = "\n".join(lgcn_predictions)
 
         # ALLMRec 모델 기반 예측
-        [data, usernum, itemnum] = self.allmrec_dataset
-
-        if user_id <= 0 or user_id > usernum:
-            return {"error": "Invalid user_id"}
-
-        seq = np.expand_dims(np.array(data[user_id]), axis=0)
-        allmrec_prediction = self.allmrec_model([user_id, seq], mode="inference")
+        seq = np.expand_dims(np.array(seq), axis=0)
+        allmrec_prediction = self.allmrec_model(seq, mode="inference")
 
         print(allmrec_prediction)
 
