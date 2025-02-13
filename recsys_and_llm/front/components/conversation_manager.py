@@ -33,7 +33,7 @@ def persist_conversation(user_id):
     data = {
         "conversations": st.session_state.conversations,
         "dialog": st.session_state.dialog,
-        "saved_conversations": st.session_state.saved_conversations,  # 추가
+        "saved_conversations": st.session_state.saved_conversations,
     }
     with open(f"{user_id}_session.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
@@ -47,6 +47,4 @@ def retrieve_persisted_conversation(user_id):
             data = json.load(f)
             st.session_state.conversations = data.get("conversations", [])
             st.session_state.dialog = data.get("dialog", [])
-            st.session_state.saved_conversations = data.get(
-                "saved_conversations", {}
-            )  # 추가
+            st.session_state.saved_conversations = data.get("saved_conversations", {})
