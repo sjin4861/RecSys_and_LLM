@@ -20,30 +20,37 @@ from tqdm import tqdm
 
 from backend.inference import ModelManager
 from ML.models.ALLMRec.a_llmrec_model import *
-from ML.models.ALLMRec.pre_train.sasrec.utils import *
+from ML.utils import *
 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 MONGO_URI = "mongodb://localhost:27017/"
 
-model_manager = None
-client = None
-db = None
+# model_manager = None
+# client = None
+# db = None
+# user = None
+# item = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """서버 시작 및 종료 시 실행할 코드"""
-    global model_manager, client, db
+    global model_manager, client, db, user, item
 
     # MongoDB 연결
     client = MongoClient(MONGO_URI)
     db = client["items"]
-    # user를 클래스로 만들기
-    # test code 작성
+    user = db["user"]
+    item = db["item"]
+
+    cold_items = find_cold(user, 50)
+    text_name_dict = get_text_name_dict(item)
+    missing_list = get_missing(text_name_dict["title"])
+    data = [cold_items, text_name_dict, missing_list]
 
     # 모델 로드
-    model_manager = ModelManager(db)
+    model_manager = ModelManager(data)
 
     yield  # 애플리케이션 실행
 
@@ -65,7 +72,6 @@ class PredictRequest(BaseModel):
 def predict(
     request: PredictRequest, model: ModelManager = Depends(lambda: model_manager)
 ):
-    user = db["user"]
     user_id = request.user_id
     user_data = user.find_one({"_id": user_id})
 

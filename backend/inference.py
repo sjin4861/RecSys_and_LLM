@@ -70,13 +70,11 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
         cache_dir="../ML/models/saved_models",
         repo_type="model",
     )
-    with open(f"{data_path}/Movies_and_TV_text_name_dict.json.gz", "rb") as f:
-        expected_dict = pickle.load(f)
 
     # model, dataset 불러오기
     _, model, dataset, _, _, _ = load_data_and_model(model_path, data_path)
 
-    return expected_dict["title"], model, dataset
+    return model, dataset
 
 
 def predict(
@@ -125,7 +123,7 @@ def get_text_name_dict(item_collection):
 
 
 class ModelManager:
-    def __init__(self, db):
+    def __init__(self, data):
         """모델 및 데이터 로드"""
         self.allmrec_model = None
         self.lgcn_model = None
@@ -136,7 +134,6 @@ class ModelManager:
         self.tisasrec_dataset = None
         self.gsasrec_dataset = None
 
-        self.missing_list = None
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
             gpu_num=0,  # GPU 번호
@@ -184,9 +181,12 @@ class ModelManager:
             device="cuda:0",
         )
 
-        user_table = db["user"]
-        item_table = db["item"]
-        self._load_models(user_table, item_table)
+        cold_items, text_name_dict, missing_list = data
+        self.llmrec_args.cold_items = cold_items
+        self.llmrec_args.text_name_dict = text_name_dict
+        self.missing_list = missing_list
+
+        self._load_models()
 
     """
     def test_data(self):
@@ -203,8 +203,9 @@ class ModelManager:
         print(a)
         print(b)
     """
-    def test_data(self): #gsasrec_model  
-        with open(f'ML/data/Movies_and_TV_text_name_dict.json.gz', 'rb') as ft:
+
+    def test_data(self):  # gsasrec_model
+        with open(f"ML/data/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
             text_name_dict = pickle.load(ft)
         username = "knh123"  # Hugging Face 계정 이름
         repo_name = "gsasrec-trained-model"  # 저장소 이름
@@ -212,50 +213,63 @@ class ModelManager:
         config_url = f"{repo_url}/config.json"
         response = requests.get(config_url)
         response.raise_for_status()  # 다운로드가 실패하면 예외 발생
-        config = response.json()     
+        config = response.json()
         config = Namespace(**config)
         self.gsasrec_model = build_model(config)
         model_weights_url = f"{repo_url}/pytorch_model.bin"
-        self.gsasrec_model.load_state_dict(torch.hub.load_state_dict_from_url(model_weights_url, map_location='cpu'))
+        self.gsasrec_model.load_state_dict(
+            torch.hub.load_state_dict_from_url(model_weights_url, map_location="cpu")
+        )
         self.gsasrec_model.eval()
         seq = None
-        a, b = gsasrec_recommend_top5(self.gsasrec_model, [(5,11), (55,11), (15,11), (105,11), (199,11), (250,11)], 978, self.gsasrec_args, text_name_dict,)
+        a, b = gsasrec_recommend_top5(
+            self.gsasrec_model,
+            [(5, 11), (55, 11), (15, 11), (105, 11), (199, 11), (250, 11)],
+            978,
+            self.gsasrec_args,
+            text_name_dict,
+        )
         print(a)
         print(b)
-    
-    
+
     def test_data2(self):
-        with open(f'ML/data/Movies_and_TV_text_name_dict.json.gz', 'rb') as ft:
+        with open(f"ML/data/Movies_and_TV_text_name_dict.json.gz", "rb") as ft:
             text_name_dict = pickle.load(ft)
         repo_id = "knh123/tisasrec-trained-model"  # 업로드한 모델의 repo ID
-        user_id = '888'
-        user_data = self.user_table.find_one({"_id": user_id}, {"items.itemnum": 1, "items.unixReviewTime": 1})
+        user_id = "888"
+        user_data = self.user_table.find_one(
+            {"_id": user_id}, {"items.itemnum": 1, "items.unixReviewTime": 1}
+        )
         item_time = []
         if user_data and "items" in user_data:
-            item_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data["items"]]
+            item_time = [
+                (item["itemnum"], item["unixReviewTime"]) for item in user_data["items"]
+            ]
 
-        model_file = hf_hub_download(repo_id=repo_id, filename="pytorch_model.bin", repo_type="model")
-        config_file = hf_hub_download(repo_id=repo_id, filename="config.json", repo_type="model")
+        model_file = hf_hub_download(
+            repo_id=repo_id, filename="pytorch_model.bin", repo_type="model"
+        )
+        config_file = hf_hub_download(
+            repo_id=repo_id, filename="config.json", repo_type="model"
+        )
         with open(config_file, "r") as f:
             config_data = json.load(f)
         args = argparse.Namespace(**config_data)
-        self.tisasrec_model = TiSASRec(config_data["usernum"], config_data["itemnum"], config_data["itemnum"], args).to(args.device)
-        self.tisasrec_model.load_state_dict(torch.load(model_file, map_location=args.device))
-        a, b = tisasrec_recommend_top5(args, self.tisasrec_model, user_id, item_time, text_name_dict)
+        self.tisasrec_model = TiSASRec(
+            config_data["usernum"], config_data["itemnum"], config_data["itemnum"], args
+        ).to(args.device)
+        self.tisasrec_model.load_state_dict(
+            torch.load(model_file, map_location=args.device)
+        )
+        a, b = tisasrec_recommend_top5(
+            args, self.tisasrec_model, user_id, item_time, text_name_dict
+        )
         print(a)
 
-    
-
-    def _load_models(self, user_table, item_table):
+    def _load_models(self):
         """모델 및 데이터 로드 로직"""
-        # Load LGCN Model and Dataset
-        self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
-        self.missing_list = get_missing(self.expected_dict)
-
-        self.llmrec_args.cold_items = find_cold(user_table, self.llmrec_args.maxlen)
+        # Load ALLMRec Model
         self.llmrec_args.missing_items = self.missing_list
-        self.llmrec_args.text_name_dict = get_text_name_dict(item_table)
-
         self.allmrec_model = A_llmrec_model(self.llmrec_args).to(
             self.llmrec_args.device
         )
@@ -267,8 +281,7 @@ class ModelManager:
         self.allmrec_model.eval()
 
         # Load LGCN Model and Dataset
-        self.expected_dict, self.lgcn_model, self.lgcn_dataset = prepare()
-        self.missing_list = get_missing(self.expected_dict)
+        self.lgcn_model, self.lgcn_dataset = prepare()
 
         # Load TiSASRec and Dataset
         self.tisasrec_dataset = data_partition(self.tisasrec_args.dataset)

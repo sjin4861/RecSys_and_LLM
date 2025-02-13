@@ -1,9 +1,11 @@
 import argparse
+import io
 import os
 import time
 
 import torch
 from data_preprocess import *
+from huggingface_hub import HfApi
 from model import SASRec
 from tqdm import tqdm
 from utils import *
@@ -142,6 +144,7 @@ if __name__ == "__main__":
             model.train()
 
         if epoch == args.num_epochs:
+
             folder = args.dataset
             fname = "SASRec.epoch={}.lr={}.layer={}.head={}.hidden={}.maxlen={}.pth"
             fname = fname.format(
@@ -152,12 +155,18 @@ if __name__ == "__main__":
                 args.hidden_units,
                 args.maxlen,
             )
-            if not os.path.exists(os.path.join(folder, fname)):
-                try:
-                    os.makedirs(os.path.join(folder))
-                except:
-                    print()
-            torch.save([model.kwargs, model.state_dict()], os.path.join(folder, fname))
+
+            repo_id = "PNUDI/A-LLM"
+            out_dir = f"recsys/{folder}/sasrec/"
+            api = HfApi()
+            recsys_buffer = io.BytesIO()
+
+            torch.save([model.kwargs, model.state_dict()], recsys_buffer)
+            api.upload_file(
+                path_or_fileobj=recsys_buffer,
+                path_in_repo=out_dir + fname,
+                repo_id=repo_id,
+            )
 
     sampler.close()
     print("Done")

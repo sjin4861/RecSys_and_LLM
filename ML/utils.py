@@ -1,4 +1,5 @@
 import os
+from collections import Counter, defaultdict
 from datetime import datetime
 
 import numpy as np
@@ -74,7 +75,7 @@ def get_text_name_dict(item_collection):
     text_name_dict = {"title": {}, "description": {}}
 
     for item in item_collection.find():
-        item_id = str(item["_id"])  # _id를 문자열로 변환
+        item_id = int(item["_id"])  # _id를 문자열로 변환
         title = item.get("title", "No Title")  # 기본값 설정
         description = item.get("description", ["No Description"])  # 기본값 설정
 
