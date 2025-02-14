@@ -36,7 +36,7 @@ def show_info(item_id: str):
     item_info = get_detail(item_id)
     _, con, _ = st.columns([0.3, 0.5, 0.3])
     with con:
-        show_img(item_id, item_info["img_url"])
+        show_img(item_id, item_info["img_url"], clickable=False)
         st.subheader(item_info["item_title"])
         st.markdown(f"출연진 : {item_info['people']}")
         st.markdown(f"개봉일 : {item_info['release']}")
