@@ -1,10 +1,13 @@
+import os
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pymongo import MongoClient
 
-from backend.config import DB_NAME, MONGO_URI
-from backend.inference import ModelManager
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from backend.app.config import DB_NAME, MONGO_URI
+from backend.app.inference import ModelManager
 from ML.utils import find_cold, get_missing, get_text_name_dict
 
 
@@ -37,5 +40,6 @@ async def lifespan(app: FastAPI):
     }
 
     # 리소스 정리
+    del model_manager
     client.close()
     print("서버 종료: 모델 리소스 해제 및 MongoDB 연결 종료.")

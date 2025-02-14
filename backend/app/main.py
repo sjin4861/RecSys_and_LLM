@@ -1,8 +1,14 @@
+import os
+import sys
+
 import uvicorn
-from app.routers import router
 from fastapi import FastAPI
 
-app = FastAPI()
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from backend.app.dependencies import lifespan
+from backend.app.routers import router
+
+app = FastAPI(lifespan=lifespan)
 
 # 라우터 등록
 app.include_router(router)
