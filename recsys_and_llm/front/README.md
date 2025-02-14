@@ -71,7 +71,7 @@ C:\USERS\USER\DESKTOP\24_WINTER\RECSYS_AND_LLM\FRONT
 ### **3. components**
 - `conversation_manager.py`: 대화 내역 저장 및 로드와 관련된 기능을 처리합니다.
 - `pipeline_manager.py`: 추천 파이프라인 설정 및 관리 기능을 담당합니다.
-- `recommend_main.py`: 추천 결과의 메인 UI를 담당하는 모듈입니다.
+- `recommender.py`: 추천 결과의 메인 UI를 담당하는 모듈입니다.
 - `response_generator.py`: 추천 시스템에서 생성된 응답 데이터를 처리하는 모듈입니다.
 - `__init__.py`: 컴포넌트 모듈을 초기화하고 다른 모듈에서 쉽게 가져올 수 있도록 설정합니다.
 
