@@ -23,5 +23,5 @@ def show_img(
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-    html = f"<a href='{os.environ.get('BASE_URL')}/item_page/?user={st.session_state.user_id}&item={item_id}' target = '_self'><img src='data:image/png;base64,{img_str}'></a>"
+    html = f"<a href='{os.environ.get('FRONT_URL')}/item_page/?user={st.session_state.user_id}&item={item_id}' target = '_self'><img src='data:image/png;base64,{img_str}'></a>"
     st.markdown(html, unsafe_allow_html=True)
