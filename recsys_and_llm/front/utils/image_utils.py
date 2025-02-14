@@ -12,6 +12,7 @@ from PIL import Image
 def show_img(
     item_id: str,
     img_url: str = "https://ghcci.korcham.net/images/no-image01.gif",
+    clickable: bool = True,
 ):
     """
     이미지 URL을 통해 이미지를 로드하고 Streamlit에 표시
@@ -23,5 +24,10 @@ def show_img(
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-    html = f"<a href='{os.environ.get('FRONT_URL')}/item_page/?user={st.session_state.user_id}&item={item_id}' target = '_self'><img src='data:image/png;base64,{img_str}'></a>"
+    html = f"<img src='data:image/png;base64,{img_str}'>"
+    html = (
+        f"<a href='{os.environ.get('FRONT_URL')}/item_page/?user={st.session_state.user_id}&item={item_id}' target = '_self'>{html}</a>"
+        if clickable
+        else html
+    )
     st.markdown(html, unsafe_allow_html=True)
