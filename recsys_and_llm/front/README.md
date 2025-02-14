@@ -79,7 +79,8 @@ C:\USERS\USER\DESKTOP\24_WINTER\RECSYS_AND_LLM\FRONT
 
 ### **4. pages**
 - `chat_page.py`: 대화형 추천 시스템 페이지입니다. 사용자 입력과 모델 응답을 처리합니다.
-- `components.py`: 페이지별 공통 UI 요소와 레이아웃을 정의합니다.
+- `components.py`: 페이지별 공통 UI 요소와 레이아웃을 정의합니다. 
+- `item_page.py`: 각 아이템의 정보 페이지로 아이템에 대한 정보 및 리뷰, 아이템 기반 추천을 제공합니다.
 - `main_page.py`: 애플리케이션의 메인 페이지로, 추천 결과를 표시합니다.
 - `__init__.py`: 페이지 모듈을 초기화하고 다른 모듈에서 쉽게 가져올 수 있도록 설정합니다.
 
