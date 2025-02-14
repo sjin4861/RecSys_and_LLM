@@ -41,7 +41,7 @@ def rec_main(user_id: str, item_id: str):
         }}
     </style>
     <div class="image-container">
-        <a href={os.environ.get("BASE_URL")}/item_page/?user={st.session_state.user_id}&item={item_id} target = '_self'>
+        <a href={os.environ.get("FRONT_URL")}/item_page/?user={st.session_state.user_id}&item={item_id} target = '_self'>
             <img src="{item_info['img_url']}">
         </a>
     </div>
