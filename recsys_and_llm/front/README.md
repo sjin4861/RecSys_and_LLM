@@ -90,6 +90,7 @@ C:\USERS\USER\DESKTOP\24_WINTER\RECSYS_AND_LLM\FRONT
 - `item_utils.py`: 추천 항목과 관련된 정보를 처리하는 유틸리티 함수가 포함되어 있습니다.
 - `session_utils.py`: Streamlit 세션 상태 초기화 및 관리 기능을 담당합니다.
 - `style_utils.py`: CSS 스타일을 로드하고 Streamlit 애플리케이션에 반영합니다.
+- `user_utils.py`: 유저와 관련된 기능(회원가입)을 위한 유틸리티 함수가 포함되어 있습니다.
 - `__init__.py`: 유틸리티 모듈을 초기화하고 다른 모듈에서 쉽게 가져올 수 있도록 설정합니다.
 
 ---
