@@ -4184,6 +4184,26 @@ watchdog = {version = ">=2.1.5,<7", markers = "platform_system != \"Darwin\""}
 snowflake = ["snowflake-connector-python (>=3.3.0)", "snowflake-snowpark-python[modin] (>=1.17.0)"]
 
 [[package]]
+name = "streamlit-searchbox"
+version = "0.1.20"
+description = "Autocomplete Searchbox"
+optional = false
+python-versions = "!=3.9.7,>=3.9"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "streamlit_searchbox-0.1.20-py3-none-any.whl", hash = "sha256:da239b1f47e32b9fad5f3f3f5700c3222074ad09e3bbb5886b7c9e08ceb0b7d5"},
+    {file = "streamlit_searchbox-0.1.20.tar.gz", hash = "sha256:0e7d61a5f7caedcba45fd847baa01e3eba68887240c8bec884de63509c0a563c"},
+]
+
+[package.dependencies]
+streamlit = ">=1.0"
+
+[package.extras]
+dev = ["pre-commit (==4.0.1)", "pyright (==1.1.377)", "ruff (==0.7.1)"]
+tests = ["playwright (==1.46.0)", "pytest (==8.3.2)", "pytest-playwright (==0.5.1)", "wikipedia (==1.4.0)"]
+
+[[package]]
 name = "sympy"
 version = "1.13.1"
 description = "Computer algebra system (CAS) in Python"
@@ -5084,4 +5104,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "<4.0, >=3.10.0"
-content-hash = "42f969af18fe3871c3cb6f10049956803361f4d240adc78466a46d62b0fb33b5"
+content-hash = "58035c4cd5faab55499f4e3462198977c848fc9514c1fc9318f647cfe2e81bab"
