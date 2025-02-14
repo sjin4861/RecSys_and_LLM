@@ -8,5 +8,5 @@ def get_unicrs_response(user_message: str, dialog: list, pipeline) -> str:
     dialog.append(f"User: {user_message}")
     full_context = "<sep>".join(dialog)
     response = pipeline.response(full_context)
-    dialog.append(f"System: {response}")
+    dialog.append(f"{response}")
     return response
