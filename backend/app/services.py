@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import requests
-from config import DEFAULT_IMAGE_URL
 
+from backend.app.config import DEFAULT_IMAGE_URL
 from backend.app.schemas import *
 
 
@@ -47,7 +47,11 @@ def sign_in(request: SignInRequest, model_manager, user_collection):
     return ApiResponse(
         success=True,
         message="로그인 성공",
-        data={"user_id": user_data["_id"], "name": user_data["userName"]},
+        data={
+            "user_id": user_data["_id"],
+            "name": user_data["userName"],
+            "predictions": result,
+        },
     )
 
 
