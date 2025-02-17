@@ -23,10 +23,8 @@ def build_model(config, num_items):
     return model
 
 
-def gsasrec_recommend_top5(model, dataset, user_id, args, text_name_dict):
-    User, user_num, item_num, time_num, item_map, reverse_item_map = dataset
-    user_sequence = User[user_id]
-
+def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
+    
     if len(user_sequence) < 1:
         print(f"User {user_id} has no sequence data.")
         return []
@@ -41,6 +39,7 @@ def gsasrec_recommend_top5(model, dataset, user_id, args, text_name_dict):
         if idx == -1:
             break
     device = get_device()
+    model = model.to(args.device)
     seq = torch.tensor(seq, dtype=torch.long)
     seq = seq.to(args.device)
     predictions_num, predictions_score = model.get_predictions(seq, 20)  # 반환값 분리
@@ -52,14 +51,14 @@ def gsasrec_recommend_top5(model, dataset, user_id, args, text_name_dict):
     # Top-5 아이템 인덱스 추출
     # print(top5_idx)
     i = 0
-    top5_titles = []
+ 
     top5_num = []
     for idx in predictions_num:
-        if len(top5_titles) == 5:
+        if len(top5_num) == 8:
             break
-        if int(idx.item()) + 1 in text_name_dict["title"]:
-            top5_titles.append(text_name_dict["title"][int(idx.item()) + 1])
-            top5_num.append(int(idx.item()) + 1)
+        if int(idx.item()) + 1 in missing_list:
+            continue
+        top5_num.append(int(idx.item()) + 1)
     # top5_titles = [text_name_dict['title'][int(idx.item()) + 1] for idx in top5_idx]
 
-    return top5_titles, top5_num
+    return top5_num
