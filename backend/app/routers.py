@@ -36,6 +36,18 @@ def predict(
     )
 
 
+@router.post("/review")
+def predict(
+    request: ReviewPostRequest, dependencies: dict = Depends(lambda: router.lifespan)
+):
+    return review_post(
+        request,
+        dependencies["user"],
+        dependencies["item"],
+        dependencies["review"],
+    )
+
+
 # for test
 @router.post("/main")
 def predict(
