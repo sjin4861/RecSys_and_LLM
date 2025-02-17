@@ -23,31 +23,32 @@ def main():
     if st.session_state.user_id == "":
         st.switch_page("./app.py")
 
-    empty1, _, empty2 = st.columns([0.1, 2.0, 0.1])
+    empty1, con, empty2 = st.columns([0.05, 0.9, 0.05])
     with empty1:
         empty()
 
     if st.session_state.selected is not None:
-        show_info(st.session_state.selected)
-        st.header("")
-        rec_line(
-            f"{get_detail(st.session_state.selected)['item_title']}와 유사한 작품",
-            rec_data_8,
-        )
-
-        _, back_btn, logout_btn, _ = st.columns([0.725, 0.15, 0.15, 0.725])
-
-        with back_btn:
+        with con:
+            show_info(st.session_state.selected)
             st.header("")
+            rec_line(
+                f"{get_detail(st.session_state.selected)['item_title']}와 유사한 작품",
+                rec_data_8,
+            )
 
-            if st.button("Back"):
-                st.switch_page("./pages/main_page.py")
+            _, back_btn, logout_btn, _ = st.columns([0.725, 0.15, 0.15, 0.725])
 
-        with logout_btn:
-            st.header("")
+            with back_btn:
+                st.header("")
 
-            if st.button("Logout"):
-                st.switch_page("./app.py")
+                if st.button("Back"):
+                    st.switch_page("./pages/main_page.py")
+
+            with logout_btn:
+                st.header("")
+
+                if st.button("Logout"):
+                    st.switch_page("./app.py")
 
     with empty2:
         empty()
