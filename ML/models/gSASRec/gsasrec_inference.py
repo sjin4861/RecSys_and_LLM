@@ -11,9 +11,9 @@ def get_device():
     return device
 
 
-def build_model(config, num_items):
+def build_model(config):
     model = GSASRec(
-        num_items,
+        num_items = config.itemnum,
         sequence_length=config.sequence_length,
         embedding_dim=config.embedding_dim,
         num_heads=config.num_heads,
@@ -26,7 +26,7 @@ def build_model(config, num_items):
 def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
     
     if len(user_sequence) < 1:
-        print(f"User {user_id} has no sequence data.")
+        #print(f"User {user_id} has no sequence data.")
         return []
 
     seq = np.zeros([args.sequence_length], dtype=np.int32)
