@@ -121,3 +121,15 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     ]  # 인덱스를 아이템 번호로 매핑
 
     return top_k_items
+
+
+def seq_preprocess(maxlen, data):
+    seq = np.zeros([maxlen], dtype=np.int32)
+    idx = maxlen - 1
+    for i in reversed(data):
+        seq[idx] = i
+        idx -= 1
+        if idx == -1:
+            break
+
+    return seq

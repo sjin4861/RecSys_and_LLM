@@ -18,7 +18,12 @@ def predict(request: SignUpRequest, dependencies: dict = Depends(get_dependencie
 
 @router.post("/sign-in")
 def predict(request: SignInRequest, dependencies: dict = Depends(get_dependencies)):
-    return sign_in(request, dependencies["model_manager"], dependencies["user"])
+    return sign_in(
+        request,
+        dependencies["model_manager"],
+        dependencies["user"],
+        dependencies["item"],
+    )
 
 
 @router.post("/detail")
@@ -48,4 +53,9 @@ def predict(request: ReviewPostRequest, dependencies: dict = Depends(get_depende
 def predict(
     request: MainPredictRequest, dependencies: dict = Depends(get_dependencies)
 ):
-    return main_prediction(request, dependencies["model_manager"], dependencies["user"])
+    return main_prediction(
+        request,
+        dependencies["model_manager"],
+        dependencies["user"],
+        dependencies["item"],
+    )
