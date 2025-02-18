@@ -9,9 +9,9 @@ from huggingface_hub import HfApi, hf_hub_download
 from sentence_transformers import SentenceTransformer
 from torch.cuda.amp import autocast as autocast
 
-from ML.models.ALLMRec.llm4rec import *
-from ML.models.ALLMRec.recsys_model import *
-from ML.utils import *
+from ml.models.ALLMRec.llm4rec import *
+from ml.models.ALLMRec.recsys_model import *
+from ml.utils import *
 
 
 class two_layer_mlp(nn.Module):
