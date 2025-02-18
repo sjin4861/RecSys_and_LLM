@@ -110,7 +110,7 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     predictions = predictions[0]  # - for 1st argsort DESC
 
     # Top-K 아이템 선택 (가장 높은 점수 기준)
-    top_k = 10
+    top_k = 20
     top_k_indices = predictions.argsort()[
         :top_k
     ]  # 점수가 높은 Top-K 아이템의 인덱스 선택

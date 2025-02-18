@@ -7,6 +7,21 @@ from backend.app.config import DEFAULT_IMAGE_URL
 from backend.app.schemas import *
 
 
+def get_item_img(url_lst):
+    if not url_lst:  # 리스트가 비어있으면 기본 이미지 반환
+        return DEFAULT_IMAGE_URL
+
+    for url in url_lst:
+        try:
+            response = requests.head(url, timeout=3)  # HEAD 요청으로 빠르게 확인
+            if response.status_code == 200:
+                return url
+        except requests.RequestException:
+            continue
+
+    return DEFAULT_IMAGE_URL
+
+
 def sign_up(request: SignUpRequest, user_collection):
     user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
@@ -88,21 +103,6 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
     )
 
 
-def get_item_img(url_lst):
-    if not url_lst:  # 리스트가 비어있으면 기본 이미지 반환
-        return DEFAULT_IMAGE_URL
-
-    for url in url_lst:
-        try:
-            response = requests.head(url, timeout=3)  # HEAD 요청으로 빠르게 확인
-            if response.status_code == 200:
-                return url
-        except requests.RequestException:
-            continue
-
-    return DEFAULT_IMAGE_URL
-
-
 def detail_prediction(
     request: DetailPredictRequest, model_manager, item_collection, review_collection
 ):
@@ -118,7 +118,7 @@ def detail_prediction(
     reviews_dict = review_data.get("review", {}) if review_data else {}
 
     reviews = []
-    for reviewer_name, review_text in reviews_dict.items():
+    for reviewer_name, review_text in reversed(reviews_dict.items()):
         reviews.append({"user_name": reviewer_name, "review": review_text})
 
     title = item_data.get("title", "No Title Available")
@@ -129,7 +129,7 @@ def detail_prediction(
     else:
         description = "No Description Available"
 
-    # 모델 추론
+    # 모델 추론 - 찬미님 모델
     predictions = []
 
     # 5. 반환할 데이터 구성
