@@ -27,7 +27,7 @@ from ml.models.ALLMRec.pre_train.sasrec.utils import *
 from ml.models.gSASRec.gsasrec_inference import *
 from ml.models.LGCN.model import MLGCN
 from ml.models.TiSASRec.TiSASRec_inference import *
-from ml.utils import get_missing
+from ml.utils import get_missing, seq_preprocess
 
 
 def setup_ddp(rank, world_size):
@@ -255,6 +255,7 @@ class ModelManager:
         # lgcn_predictions = "\n".join(lgcn_predictions)
 
         # ALLMRec 모델 기반 예측
+        seq = seq_preprocess(self.llmrec_args.maxlen, seq)
         seq = np.expand_dims(np.array(seq), axis=0)
         allmrec_prediction = self.allmrec_model(seq, mode="inference")
 

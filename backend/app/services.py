@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import requests
@@ -26,7 +27,7 @@ def sign_up(request: SignUpRequest, user_collection):
     )
 
 
-def sign_in(request: SignInRequest, model_manager, user_collection):
+def sign_in(request: SignInRequest, model_manager, user_collection, item_collection):
     user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
     if not user_data:
@@ -37,21 +38,52 @@ def sign_in(request: SignInRequest, model_manager, user_collection):
 
     user_id = user_data["_id"]
     seq = [item["itemnum"] for item in user_data.get("items", [])]
-    seq_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])]
+    seq_time = [
+        (item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])
+    ]
 
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
     result = model_manager.inference(user_id, seq, seq_time)
-    # parse result
+
+    match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
+    allmrec_ids = [match.group(1)] if match else []
+    gsasrec_ids = list(map(str, result["gsasrec_prediction"]))
+    tisasrec_ids = list(map(str, result["tisasrec_prediction"]))
+
+    all_ids = list(set(allmrec_ids + gsasrec_ids + tisasrec_ids))  # 중복 제거
+    items = item_collection.find(
+        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
+    )
+
+    # 🔹 결과 가공 (MongoDB에서 찾은 데이터를 Dict으로 변환)
+    item_map = {
+        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+    }
+
+    # 🔹 JSON 형태로 변환 (요청 형식에 맞게 조정)
+    predictions = {
+        "prediction-1": {
+            "item_id": allmrec_ids[0],
+            "img_url": item_map.get(allmrec_ids[0], None),
+        },
+        "prediction-2": [
+            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in gsasrec_ids
+        ],
+        "prediction-3": [
+            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in tisasrec_ids
+        ],
+        "prediction-4": [],  # 장르 모델 완성 후 추가 예정
+    }
 
     return ApiResponse(
         success=True,
         message="로그인 성공",
         data={
-            "user_id": user_data["_id"],
+            "user_id": user_id,
             "name": user_data["userName"],
-            "predictions": result,
+            "predictions": predictions,
         },
     )
 
@@ -110,7 +142,7 @@ def detail_prediction(
             "cast": cast,
             "description": description,
             "reviews": reviews,
-            "prediction": predictions,
+            "predictions": predictions,
         },
     )
 
@@ -165,20 +197,53 @@ def review_post(
 
 
 # for test
-def main_prediction(request: MainPredictRequest, model_manager, user_collection):
+def main_prediction(
+    request: MainPredictRequest, model_manager, user_collection, item_collection
+):
     user_data = user_collection.find_one({"_id": request.user_id})
 
     if not user_data:
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
 
     seq = [item["itemnum"] for item in user_data.get("items", [])]
-    seq_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])]
+    seq_time = [
+        (item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])
+    ]
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
-    result = model_manager.inference(request.user_id, seq, seq_time)
-    # parse
+    result = model_manager.inference(user_data["_id"], seq, seq_time)
+
+    match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
+    allmrec_ids = [match.group(1)] if match else []
+    gsasrec_ids = list(map(str, result["gsasrec_prediction"]))
+    tisasrec_ids = list(map(str, result["tisasrec_prediction"]))
+
+    all_ids = list(set(allmrec_ids + gsasrec_ids + tisasrec_ids))  # 중복 제거
+    items = item_collection.find(
+        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
+    )
+
+    # 🔹 결과 가공 (MongoDB에서 찾은 데이터를 Dict으로 변환)
+    item_map = {
+        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+    }
+
+    # 🔹 JSON 형태로 변환 (요청 형식에 맞게 조정)
+    predictions = {
+        "prediction-1": {
+            "item_id": allmrec_ids[0],
+            "img_url": item_map.get(allmrec_ids[0], None),
+        },
+        "prediction-2": [
+            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in gsasrec_ids
+        ],
+        "prediction-3": [
+            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in tisasrec_ids
+        ],
+        "prediction-4": [],  # 장르 모델 완성 후 추가 예정
+    }
 
     return ApiResponse(
-        success=True, message="메인 추천 성공", data={"prediction": result}
+        success=True, message="메인 추천 성공", data={"predictions": predictions}
     )
