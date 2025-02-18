@@ -200,11 +200,11 @@ class A_llmrec_model(nn.Module):
         d_ = "No Description"
         if title_flag and description_flag:
             return [
-                f'"{self.text_name_dict[t].get(i,t_)}, {self.text_name_dict[d].get(i,d_)}"'
+                f'"{clean_text(self.text_name_dict[t].get(i,t_))}, {self.text_name_dict[d].get(i,d_)}"'
                 for i in item
             ]
         elif title_flag and not description_flag:
-            return [f'"{self.text_name_dict[t].get(i,t_)}"' for i in item]
+            return [f'"{clean_text(self.text_name_dict[t].get(i,t_))}"' for i in item]
         elif not title_flag and description_flag:
             return [f'"{self.text_name_dict[d].get(i,d_)}"' for i in item]
 
@@ -219,9 +219,9 @@ class A_llmrec_model(nn.Module):
             return f'"{self.text_name_dict[t].get(item,t_)}, {self.text_name_dict[d].get(item,d_)}"'
         elif title_flag and not description_flag:
             if mode == "inference":
-                return f'"{self.text_name_dict[t].get(item,t_)}(ID: {item})"'
+                return f'"{clean_text(self.text_name_dict[t].get(item,t_))}"'
             else:
-                return f'"{self.text_name_dict[t].get(item,t_)}"'
+                return f'"{clean_text(self.text_name_dict[t].get(item,t_))}"'
 
         elif not title_flag and description_flag:
             return f'"{self.text_name_dict[d].get(item,d_)}"'
@@ -462,17 +462,19 @@ class A_llmrec_model(nn.Module):
         candidate_ids = [
             item for item in candidate_ids if item not in self.missing_items
         ]
+        candidate_mapper = {}
         for candidate in candidate_ids:
             title = self.find_item_text_single(
                 candidate, title_flag=True, description_flag=False, mode="inference"
             )
             candidate_text.append(title + "[CandidateEmb]")
+            candidate_mapper[title] = candidate
 
         random_ = np.random.permutation(len(candidate_text))
         candidate_text = np.array(candidate_text)[random_]
         candidate_ids = np.array(candidate_ids)[random_]
 
-        return ",".join(candidate_text), candidate_ids
+        return ",".join(candidate_text), candidate_ids, candidate_mapper
 
     def pre_train_phase2(self, data, optimizer, batch_iter):
         epoch, total_epoch, step, total_step = batch_iter
@@ -693,15 +695,15 @@ class A_llmrec_model(nn.Module):
             interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
 
             candidate_num = 20
-            candidate_text, candidate_ids = self.make_candidate_text_inference(
-                seq[seq > 0], candidate_num
+            candidate_text, candidate_ids, candidate_mapper = (
+                self.make_candidate_text_inference(seq[seq > 0], candidate_num)
             )
 
             # 영화 추천
             input_text = ""
             input_text += " is a user representation. This user has watched "
             input_text += interact_text
-            input_text += " in the previous. Recommend one next movie and its ID for this user to watch next from the following movie title set, "
+            input_text += " in the previous. Recommend one next movie for this user to watch next from the following movie title set, "
             input_text += candidate_text
             input_text += ". The recommendation is "
 
@@ -761,6 +763,8 @@ class A_llmrec_model(nn.Module):
             output_text = [text.strip() for text in output_text]
 
         print(text_input[0])
-        print("LLM: " + str(output_text[0]))
 
-        return str(output_text[0])
+        output_key = str(output_text[0])
+        print("LLM: " + output_key)
+
+        return candidate_mapper.get(output_key, None)

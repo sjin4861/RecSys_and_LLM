@@ -1,4 +1,6 @@
+import html
 import os
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 
@@ -133,3 +135,18 @@ def seq_preprocess(maxlen, data):
             break
 
     return seq
+
+
+def clean_text(text):
+    text = str(text)  # 문자열 변환
+    text = html.unescape(text)  # 🔹 HTML 엔티티 변환 (&amp; → & 등)
+
+    # 🔹 특수 공백 및 제어 문자 제거 (유니코드 포함)
+    text = text.replace("\xa0", " ").replace("\t", " ").replace("\n", " ")
+
+    # 🔹 앞뒤 공백 및 큰따옴표 제거
+    text = text.strip().strip('"').strip()
+
+    # 🔹 중복 공백 제거 (모든 종류의 공백 포함)
+    text = re.sub(r"\s+", " ", text, flags=re.UNICODE)
+    return text
