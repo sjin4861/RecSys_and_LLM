@@ -37,11 +37,12 @@ def sign_in(request: SignInRequest, model_manager, user_collection):
 
     user_id = user_data["_id"]
     seq = [item["itemnum"] for item in user_data.get("items", [])]
+    seq_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])]
 
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
-    result = model_manager.inference(user_id, seq)
+    result = model_manager.inference(user_id, seq, seq_time)
     # parse result
 
     return ApiResponse(
@@ -171,11 +172,11 @@ def main_prediction(request: MainPredictRequest, model_manager, user_collection)
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
 
     seq = [item["itemnum"] for item in user_data.get("items", [])]
-
+    seq_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])]
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
-    result = model_manager.inference(request.user_id, seq)
+    result = model_manager.inference(request.user_id, seq, seq_time)
     # parse
 
     return ApiResponse(
