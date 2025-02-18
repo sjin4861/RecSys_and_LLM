@@ -13,7 +13,7 @@ def get_device():
 
 def build_model(config):
     model = GSASRec(
-        num_items = config.itemnum,
+        num_items=config.itemnum,
         sequence_length=config.sequence_length,
         embedding_dim=config.embedding_dim,
         num_heads=config.num_heads,
@@ -24,9 +24,9 @@ def build_model(config):
 
 
 def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
-    
+
     if len(user_sequence) < 1:
-        #print(f"User {user_id} has no sequence data.")
+        # print(f"User {user_id} has no sequence data.")
         return []
 
     seq = np.zeros([args.sequence_length], dtype=np.int32)
@@ -51,7 +51,7 @@ def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
     # Top-5 아이템 인덱스 추출
     # print(top5_idx)
     i = 0
- 
+
     top5_num = []
     for idx in predictions_num:
         if len(top5_num) == 8:

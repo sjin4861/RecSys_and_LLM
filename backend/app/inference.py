@@ -13,6 +13,7 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 from huggingface_hub import hf_hub_download, snapshot_download
+from pymongo import MongoClient
 from recbole.data import create_dataset, data_preparation
 from recbole.utils import init_logger, init_seed
 from torch.distributed import destroy_process_group, init_process_group
@@ -20,13 +21,13 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
-from pymongo import MongoClient
-from ML.models.ALLMRec.a_llmrec_model import *
-from ML.models.ALLMRec.pre_train.sasrec.utils import *
-from ML.models.gSASRec.gsasrec_inference import *
-from ML.models.LGCN.model import MLGCN
-from ML.models.TiSASRec.TiSASRec_inference import *
-from ML.utils import get_missing
+
+from ml.models.ALLMRec.a_llmrec_model import *
+from ml.models.ALLMRec.pre_train.sasrec.utils import *
+from ml.models.gSASRec.gsasrec_inference import *
+from ml.models.LGCN.model import MLGCN
+from ml.models.TiSASRec.TiSASRec_inference import *
+from ml.utils import get_missing
 
 
 def setup_ddp(rank, world_size):
@@ -76,23 +77,25 @@ def prepare(model_version: str = "LightGCN-Jan-08-2025_10-28-58"):
 
     return model, dataset
 
+
 def gsasrec_load_model():
     repo_id = "PNUDI/gSASRec"
 
     model_file = hf_hub_download(
-                repo_id=repo_id, filename="pytorch_model.bin", repo_type="model"
-            )
+        repo_id=repo_id, filename="pytorch_model.bin", repo_type="model"
+    )
     config_file = hf_hub_download(
-                repo_id=repo_id, filename="config.json", repo_type="model"
-            )
+        repo_id=repo_id, filename="config.json", repo_type="model"
+    )
     with open(config_file, "r") as f:
         config_data = json.load(f)
     config = argparse.Namespace(**config_data)
 
     model = build_model(config)
 
-    model.load_state_dict(torch.load(model_file, map_location='cpu'))
+    model.load_state_dict(torch.load(model_file, map_location="cpu"))
     return model, config
+
 
 def tisasrec_load_model():
     repo_id = "PNUDI/TiSASRec"  # 업로드한 모델의 repo ID
@@ -109,10 +112,8 @@ def tisasrec_load_model():
     model = TiSASRec(
         config_data["usernum"], config_data["itemnum"], config_data["itemnum"], args
     ).to(args.device)
-    model.load_state_dict(
-        torch.load(model_file, map_location=args.device)
-    )
-    
+    model.load_state_dict(torch.load(model_file, map_location=args.device))
+
     return model, args
 
 
@@ -174,7 +175,7 @@ class ModelManager:
         self.gsasrec_dataset = None
         self.tisasrec_args = None
         self.gsasrec_args = None
-        
+
         self.llmrec_args = Namespace(
             multi_gpu=False,  # Multi-GPU 사용 여부
             gpu_num=0,  # GPU 번호
@@ -202,12 +203,12 @@ class ModelManager:
         self.missing_list = missing_list
 
         self._load_models()
-        #self.inference(1, 1) test code
+        # self.inference(1, 1) test code
 
     def _load_models(self):
         """모델 및 데이터 로드 로직"""
         # Load ALLMRec Model
-        
+
         self.llmrec_args.missing_items = self.missing_list
         self.allmrec_model = A_llmrec_model(self.llmrec_args).to(
             self.llmrec_args.device
@@ -221,7 +222,7 @@ class ModelManager:
 
         # Load LGCN Model and Dataset
         self.lgcn_model, self.lgcn_dataset = prepare()
-        
+
         # Load TiSASRec and Dataset
         # Load TiSASRec
         self.tisasrec_model, self.tisasrec_args = tisasrec_load_model()
@@ -231,34 +232,34 @@ class ModelManager:
         self.gsasrec_model.eval()
 
     def inference(self, user_id, seq, seq_time):
-        
-        #test code
-        '''
+
+        # test code
+        """
         client = MongoClient("mongodb://localhost:27017/")
         db = client['items']
         user_collection = db["user"]
         user_data = user_collection.find_one({"_id": '888'})
         seq_time = [(item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])]
-        '''
-        
+        """
+
         """ALLMRec 및 LGCN 모델 기반 추론"""
         # LGCN 모델 기반 예측
-        
-        lgcn_predictions = predict(
-            str(user_id),
-            self.expected_dict,
-            self.missing_list,
-            self.lgcn_model,
-            self.lgcn_dataset,
-        )
-        lgcn_predictions = "\n".join(lgcn_predictions)
+
+        # lgcn_predictions = predict(
+        #     str(user_id),
+        #     self.expected_dict,
+        #     self.missing_list,
+        #     self.lgcn_model,
+        #     self.lgcn_dataset,
+        # )
+        # lgcn_predictions = "\n".join(lgcn_predictions)
 
         # ALLMRec 모델 기반 예측
         seq = np.expand_dims(np.array(seq), axis=0)
         allmrec_prediction = self.allmrec_model(seq, mode="inference")
 
         print(allmrec_prediction)
-        
+
         # TiSASRec
         tisasrec_prediction = tisasrec_recommend_top5(
             self.tisasrec_args,
@@ -280,7 +281,7 @@ class ModelManager:
         print(gsasrec_prediction)
 
         return {
-            "lgcn_predictions": lgcn_predictions,
+            # "lgcn_predictions": lgcn_predictions,
             "allmrec_prediction": allmrec_prediction,
             "gsasrec_prediction": gsasrec_prediction,
             "tisasrec_prediction": tisasrec_prediction,

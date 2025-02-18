@@ -149,9 +149,6 @@ def data_partition(fname):
 
 def tisasrec_recommend_top5(args, model, user_id, user_sequence, missing_list):
 
-   
-    
-
     if len(user_sequence) < 1:
         return []
 
@@ -182,7 +179,7 @@ def tisasrec_recommend_top5(args, model, user_id, user_sequence, missing_list):
     top5_idx = predictions.argsort()
     # print(top5_idx)
     i = 0
-    
+
     top5_num = []
     for idx in top5_idx:
         if len(top5_num) == 8:

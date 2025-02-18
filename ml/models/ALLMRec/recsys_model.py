@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from huggingface_hub import HfApi, hf_hub_download
 
-from ML.models.ALLMRec.pre_train.sasrec.model import SASRec
-from ML.utils import *
+from ml.models.ALLMRec.pre_train.sasrec.model import SASRec
+from ml.utils import *
 
 
 def load_checkpoint(repo_id, recsys, pre_trained):

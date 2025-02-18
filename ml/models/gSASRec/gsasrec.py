@@ -84,8 +84,8 @@ class GSASRec(torch.nn.Module):
             model_out, _ = self.forward(input)
             seq_emb = model_out[:, -1, :]
             output_embeddings = self.get_output_embeddings()
-            #print(output_embeddings.weight.shape)
-            #print(seq_emb.shape)
+            # print(output_embeddings.weight.shape)
+            # print(seq_emb.shape)
             scores = torch.einsum("bd,nd->bn", seq_emb, output_embeddings.weight)
             scores[:, 0] = float("-inf")
             scores[:, self.num_items + 1 :] = float("-inf")
