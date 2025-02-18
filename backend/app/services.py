@@ -62,8 +62,10 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
 
     result = model_manager.inference(user_id, seq, seq_time)
 
-    match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
-    allmrec_ids = [match.group(1)] if match else []
+    # match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
+    # allmrec_ids = [match.group(1)] if match else []
+
+    allmrec_ids = [str(result["allmrec_prediction"])]
     gsasrec_ids = list(map(str, result["gsasrec_prediction"]))
     tisasrec_ids = list(map(str, result["tisasrec_prediction"]))
 
@@ -214,8 +216,10 @@ def main_prediction(
 
     result = model_manager.inference(user_data["_id"], seq, seq_time)
 
-    match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
-    allmrec_ids = [match.group(1)] if match else []
+    # match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
+    # allmrec_ids = [match.group(1)] if match else []
+
+    allmrec_ids = [str(result["allmrec_prediction"])]
     gsasrec_ids = list(map(str, result["gsasrec_prediction"]))
     tisasrec_ids = list(map(str, result["tisasrec_prediction"]))
 
