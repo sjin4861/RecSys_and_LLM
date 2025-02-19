@@ -4107,6 +4107,21 @@ files = [
 ]
 
 [[package]]
+name = "st-star-rating"
+version = "0.0.6"
+description = "Streamlit Component for Star Ratings"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "st_star_rating-0.0.6-py3-none-any.whl", hash = "sha256:238e31d531df34a8e15eebb348cbed953c9c1689889233457c8e67846b073d79"},
+]
+
+[package.dependencies]
+streamlit = ">=0.63"
+
+[[package]]
 name = "stack-data"
 version = "0.6.3"
 description = "Extract data from python stack frames and tracebacks for informative displays"
@@ -5104,4 +5119,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "<4.0, >=3.10.0"
-content-hash = "58035c4cd5faab55499f4e3462198977c848fc9514c1fc9318f647cfe2e81bab"
+content-hash = "d1c3e816be5facbbd79ef83a80f05b4f2fae1a975f62786e2b09abf6d0d271ce"
