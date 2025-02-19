@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 
 from backend.app.config import DEFAULT_IMAGE_URL
+from backend.app.inference import inference
 from backend.app.schemas import *
 
 
@@ -60,7 +61,7 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
-    result = model_manager.inference(user_id, seq, seq_time)
+    result = inference(model_manager, user_id, seq, seq_time)
 
     # match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
     # allmrec_ids = [match.group(1)] if match else []
@@ -214,7 +215,7 @@ def main_prediction(
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
-    result = model_manager.inference(user_data["_id"], seq, seq_time)
+    result = inference(model_manager, user_data["_id"], seq, seq_time)
 
     # match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
     # allmrec_ids = [match.group(1)] if match else []
