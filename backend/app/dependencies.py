@@ -7,7 +7,7 @@ from pymongo import MongoClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from backend.app.config import DB_NAME, MONGO_URI
-from backend.app.inference import ModelManager
+from ml.models.model_manager import ModelManager
 from ml.utils import find_cold, get_missing, get_text_name_dict
 
 
