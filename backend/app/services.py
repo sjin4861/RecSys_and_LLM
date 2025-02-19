@@ -29,6 +29,10 @@ def sign_up(request: SignUpRequest, user_collection):
     if user_data:
         return ApiResponse(success=False, message="이미 존재하는 아이디입니다.")
 
+    existing_user = user_collection.find_one({"userName": request.name})
+    if existing_user:
+        return ApiResponse(success=False, message="이미 존재하는 닉네임입니다.")
+
     new_user = {
         "_id": str(user_collection.count_documents({}) + 1),  # UserNum 자동 생성
         "reviewerID": request.reviewer_id,
@@ -75,12 +79,10 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
         {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
     )
 
-    # 🔹 결과 가공 (MongoDB에서 찾은 데이터를 Dict으로 변환)
     item_map = {
         item["_id"]: get_item_img(item.get("available_images", [])) for item in items
     }
 
-    # 🔹 JSON 형태로 변환 (요청 형식에 맞게 조정)
     predictions = {
         "prediction-1": {
             "item_id": allmrec_ids[0],
@@ -229,12 +231,10 @@ def main_prediction(
         {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
     )
 
-    # 🔹 결과 가공 (MongoDB에서 찾은 데이터를 Dict으로 변환)
     item_map = {
         item["_id"]: get_item_img(item.get("available_images", [])) for item in items
     }
 
-    # 🔹 JSON 형태로 변환 (요청 형식에 맞게 조정)
     predictions = {
         "prediction-1": {
             "item_id": allmrec_ids[0],
