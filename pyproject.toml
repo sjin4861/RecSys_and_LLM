@@ -32,6 +32,7 @@ dependencies = [
     "kmeans-pytorch (>=0.3,<0.4)",
     "sentence-transformers (==2.6.1)",
     "streamlit-searchbox (>=0.1.20,<0.2.0)",
+    "st-star-rating (>=0.0.6,<0.0.7)",
 ]
 
 
