@@ -33,6 +33,7 @@ def predict(
     return detail_prediction(
         request,
         dependencies["model_manager"],
+        dependencies["user"],
         dependencies["item"],
         dependencies["review"],
     )

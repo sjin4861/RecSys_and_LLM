@@ -16,6 +16,7 @@ class SignInRequest(BaseModel):
 
 
 class DetailPredictRequest(BaseModel):
+    reviewer_id: str
     item_id: str
 
 
