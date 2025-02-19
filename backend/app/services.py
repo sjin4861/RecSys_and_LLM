@@ -109,22 +109,42 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
 
 
 def detail_prediction(
-    request: DetailPredictRequest, model_manager, item_collection, review_collection
+    request: DetailPredictRequest,
+    model_manager,
+    user_collection,
+    item_collection,
+    review_collection,
 ):
     item_data = item_collection.find_one({"_id": request.item_id})
 
     if not item_data:
         return ApiResponse(success=False, message="존재하지 않는 아이템입니다.")
 
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 사용자입니다.")
+
     img = get_item_img(item_data["available_images"])
 
     # 필요한 정보 추출
     review_data = review_collection.find_one({"_id": item_data["_id"]})
-    reviews_dict = review_data.get("review", {}) if review_data else {}
+    reviews_list = review_data.get("review", []) if review_data else []
 
-    reviews = []
-    for reviewer_name, review_text in reversed(reviews_dict.items()):
-        reviews.append({"user_name": reviewer_name, "review": review_text})
+    review_data = {"my_review": "", "my_rating": "", "others": []}
+    for review in reversed(reviews_list):  # 최신 리뷰가 먼저 오도록 역순 정렬
+        user_name = review.get("userName", "Unknown User")  # 유저 이름 가져오기
+        review_text = review.get("reviewText", "")  # 리뷰 내용 가져오기
+        rating = review.get("rating", None)  # 평점 가져오기 (숫자)
+        rating_str = str(rating) if rating is not None else ""
+
+        if user_name == user_data["userName"]:
+            review_data["my_review"] = review_text
+            review_data["my_rating"] = rating_str
+        else:
+            review_data["others"].append(
+                {"user_name": user_name, "review": review_text, "rating": rating_str}
+            )
 
     title = item_data.get("title", "No Title Available")
     cast = item_data.get("cast", [])
@@ -146,7 +166,7 @@ def detail_prediction(
             "title": title,
             "cast": cast,
             "description": description,
-            "reviews": reviews,
+            "reviews": review_data,
             "predictions": predictions,
         },
     )
@@ -169,19 +189,30 @@ def review_post(
     # 리뷰 업데이트
     user_name = user_data["userName"]
     review_data = review_collection.find_one({"_id": item_data["_id"]})
+
+    existing_reviews = review_data.get("review", []) if review_data else []
+    if any(review["userName"] == user_name for review in existing_reviews):
+        return ApiResponse(
+            success=False, message="이미 해당 아이템에 리뷰를 등록하셨습니다."
+        )
+
+    new_review = {
+        "userName": user_name,  # 유저 이름
+        "reviewText": request.review,  # 리뷰 내용
+        "rating": request.rating,  # 평점 (숫자 그대로 저장)
+    }
+
     if not review_data:
-        default_review_data = {
+        new_review_data = {
             "_id": item_data["_id"],  # ItemNum
-            "review": {},
-            "summary": {},
+            "review": [new_review],  # 리스트로 초기화
         }
-        review_collection.insert_one(default_review_data)
+        review_collection.insert_one(new_review_data)
     else:
+        existing_reviews.append(new_review)
         review_collection.update_one(
             {"_id": item_data["_id"]},
-            {
-                "$set": {f"review.{user_name}": request.review}
-            },  # `review` 딕셔너리에 값 추가
+            {"$set": {"review": existing_reviews}},  # 리뷰 리스트 업데이트
         )
 
     # 유저 시퀀스 업데이트
