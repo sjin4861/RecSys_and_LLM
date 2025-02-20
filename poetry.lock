@@ -4107,6 +4107,21 @@ files = [
 ]
 
 [[package]]
+name = "st-star-rating"
+version = "0.0.6"
+description = "Streamlit Component for Star Ratings"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "st_star_rating-0.0.6-py3-none-any.whl", hash = "sha256:238e31d531df34a8e15eebb348cbed953c9c1689889233457c8e67846b073d79"},
+]
+
+[package.dependencies]
+streamlit = ">=0.63"
+
+[[package]]
 name = "stack-data"
 version = "0.6.3"
 description = "Extract data from python stack frames and tracebacks for informative displays"
@@ -4182,6 +4197,26 @@ watchdog = {version = ">=2.1.5,<7", markers = "platform_system != \"Darwin\""}
 
 [package.extras]
 snowflake = ["snowflake-connector-python (>=3.3.0)", "snowflake-snowpark-python[modin] (>=1.17.0)"]
+
+[[package]]
+name = "streamlit-searchbox"
+version = "0.1.20"
+description = "Autocomplete Searchbox"
+optional = false
+python-versions = "!=3.9.7,>=3.9"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "streamlit_searchbox-0.1.20-py3-none-any.whl", hash = "sha256:da239b1f47e32b9fad5f3f3f5700c3222074ad09e3bbb5886b7c9e08ceb0b7d5"},
+    {file = "streamlit_searchbox-0.1.20.tar.gz", hash = "sha256:0e7d61a5f7caedcba45fd847baa01e3eba68887240c8bec884de63509c0a563c"},
+]
+
+[package.dependencies]
+streamlit = ">=1.0"
+
+[package.extras]
+dev = ["pre-commit (==4.0.1)", "pyright (==1.1.377)", "ruff (==0.7.1)"]
+tests = ["playwright (==1.46.0)", "pytest (==8.3.2)", "pytest-playwright (==0.5.1)", "wikipedia (==1.4.0)"]
 
 [[package]]
 name = "sympy"
@@ -5084,4 +5119,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "<4.0, >=3.10.0"
-content-hash = "42f969af18fe3871c3cb6f10049956803361f4d240adc78466a46d62b0fb33b5"
+content-hash = "d1c3e816be5facbbd79ef83a80f05b4f2fae1a975f62786e2b09abf6d0d271ce"
