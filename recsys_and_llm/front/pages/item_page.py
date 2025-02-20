@@ -36,13 +36,7 @@ def main():
                 rec_data_8,
             )
 
-            _, back_btn, logout_btn, _ = st.columns([0.725, 0.15, 0.15, 0.725])
-
-            with back_btn:
-                st.header("")
-
-                if st.button("Back"):
-                    st.switch_page("./pages/main_page.py")
+            _, logout_btn, _ = st.columns([0.775, 0.2, 0.775])
 
             with logout_btn:
                 st.header("")
