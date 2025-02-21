@@ -2,16 +2,11 @@
 import os
 
 from dotenv import load_dotenv
-from recwizard import (
+
+from recsys_and_llm.ml.crs_toolkit import (
+    ChatgptAgent,
+    ChatgptAgentConfig,
     ChatgptGen,
-    ChatgptRec,
-    ExpansionConfig,
-    ExpansionPipeline,
-    FillBlankConfig,
-    FillBlankPipeline,
-    RedialRec,
-    UnicrsGen,
-    UnicrsRec,
     ChatgptRec,
 )
 
@@ -28,19 +23,22 @@ custom_prompt = {
     **However, exceptions are made when users ask for recommendation reasons or information about recommended movies.**
     If you lack information about your preferences (actors, directors, genres), etc., you can continue the conversation as much as you need.
     If the user shows signs of starting or ending the conversation, end the conversation with an appropriate greeting.
-    """
+    """,
 }
 
 ##################
 # Recommendation #
 ##################
-unicrs_rec = UnicrsRec.from_pretrained("recwizard/unicrs-rec-redial")
-redial_rec = RedialRec.from_pretrained("recwizard/redial-rec")
 gpt_rec_fillblank = ChatgptRec.from_pretrained("recwizard/chatgpt-rec-fillblank")
 ##################
 #   Generation   #
 ##################
-unicrs_gen = UnicrsGen.from_pretrained("recwizard/unicrs-gen-redial")
+gpt_rec = ChatgptRec.from_pretrained(
+    "RecWizard/chatgpt-rec-fillblank", prompt=custom_prompt
+)
+gpt_gen = ChatgptGen.from_pretrained(
+    "RecWizard/chatgpt-gen-fillblank", prompt=custom_prompt
+)
 gpt_gen_expansion = ChatgptGen.from_pretrained(
     model_name="gpt-4o",
     pretrained_model_name_or_path="recwizard/chatgpt-gen-expansion",
@@ -54,34 +52,13 @@ gpt_gen_fillblank = ChatgptGen.from_pretrained(
 ##################
 # Configurations #
 ##################
-fill_blank_config = FillBlankConfig()
-expansion_config = ExpansionConfig()
+chat_gpt_agent_config = ChatgptAgentConfig()
 
 
-def set_pipeline(flag, rec_module=unicrs_rec, gen_module=gpt_gen_fillblank):
+def set_pipeline(flag, rec_module=gpt_rec, gen_module=gpt_gen):
     """
     flag, rec_module, gen_module에 따라 적절한 Pipeline 객체 생성.
     """
-    if flag.lower() == "blank":
-        return FillBlankPipeline(
-            config=FillBlankConfig(),
-            rec_module=redial_rec,
-            gen_module=gpt_gen_fillblank,
-        )
-    elif flag.lower() == "expansion":
-        return ExpansionPipeline(
-            config=ExpansionConfig(),
-            rec_module=unicrs_rec,
-            gen_module=gpt_gen_expansion,
-        )
-    elif flag.lower() == "gpt":
-        return FillBlankPipeline(
-            config=FillBlankConfig(),
-            rec_module=gpt_rec_fillblank,
-            gen_module=gpt_gen_fillblank,
-        )
-    elif flag.lower() == "default":
-        return FillBlankPipeline(
-            config=FillBlankConfig(), rec_module=unicrs_rec, gen_module=unicrs_gen
-        )
-    return "DefaultUniCRS"
+    return ChatgptAgent(
+        rec_module=gpt_rec, gen_module=gpt_gen, config=chat_gpt_agent_config
+    )
