@@ -1,4 +1,7 @@
+import html
 import os
+import re
+from collections import Counter, defaultdict
 from datetime import datetime
 
 import numpy as np
@@ -74,7 +77,7 @@ def get_text_name_dict(item_collection):
     text_name_dict = {"title": {}, "description": {}}
 
     for item in item_collection.find():
-        item_id = str(item["_id"])  # _id를 문자열로 변환
+        item_id = int(item["_id"])  # _id를 문자열로 변환
         title = item.get("title", "No Title")  # 기본값 설정
         description = item.get("description", ["No Description"])  # 기본값 설정
 
@@ -109,7 +112,7 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     predictions = predictions[0]  # - for 1st argsort DESC
 
     # Top-K 아이템 선택 (가장 높은 점수 기준)
-    top_k = 10
+    top_k = 20
     top_k_indices = predictions.argsort()[
         :top_k
     ]  # 점수가 높은 Top-K 아이템의 인덱스 선택
@@ -120,3 +123,30 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
     ]  # 인덱스를 아이템 번호로 매핑
 
     return top_k_items
+
+
+def seq_preprocess(maxlen, data):
+    seq = np.zeros([maxlen], dtype=np.int32)
+    idx = maxlen - 1
+    for i in reversed(data):
+        seq[idx] = i
+        idx -= 1
+        if idx == -1:
+            break
+
+    return seq
+
+
+def clean_text(text):
+    text = str(text)  # 문자열 변환
+    text = html.unescape(text)  # 🔹 HTML 엔티티 변환 (&amp; → & 등)
+
+    # 🔹 특수 공백 및 제어 문자 제거 (유니코드 포함)
+    text = text.replace("\xa0", " ").replace("\t", " ").replace("\n", " ")
+
+    # 🔹 앞뒤 공백 및 큰따옴표 제거
+    text = text.strip().strip('"').strip()
+
+    # 🔹 중복 공백 제거 (모든 종류의 공백 포함)
+    text = re.sub(r"\s+", " ", text, flags=re.UNICODE)
+    return text

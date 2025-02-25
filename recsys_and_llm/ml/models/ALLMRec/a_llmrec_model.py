@@ -1,12 +1,14 @@
+import io
 import pickle
 import random
 
 import numpy as np
 import torch
 import torch.nn as nn
-from ML.models.ALLMRec.llm4rec import *
-from ML.models.ALLMRec.recsys_model import *
-from ML.utils import *
+from huggingface_hub import HfApi, hf_hub_download
+from ml.models.ALLMRec.llm4rec import *
+from ml.models.ALLMRec.recsys_model import *
+from ml.utils import *
 from sentence_transformers import SentenceTransformer
 from torch.cuda.amp import autocast as autocast
 
@@ -35,9 +37,13 @@ class A_llmrec_model(nn.Module):
         self.cold_items = args.cold_items
         self.missing_items = args.missing_items
         self.text_name_dict = args.text_name_dict
+        self.repo_id = "PNUDI/A-LLM"
+        self.api = HfApi()
 
         # pre_trained 모델 불러오기
-        self.recsys = RecSys(args.recsys, rec_pre_trained_data, self.device)
+        self.recsys = RecSys(
+            self.repo_id, args.recsys, rec_pre_trained_data, self.device
+        )
         self.item_num = self.recsys.item_num
         self.rec_sys_dim = self.recsys.hidden_units
         self.sbert_dim = 768
@@ -95,57 +101,96 @@ class A_llmrec_model(nn.Module):
             nn.init.xavier_normal_(self.item_emb_proj[3].weight)
 
     def save_model(self, args, epoch1=None, epoch2=None):
-        out_dir = f"./models/saved_models/"
-        create_dir(out_dir)
         out_dir += f"{args.rec_pre_trained_data}_{args.recsys}_{epoch1}_"
         if args.pretrain_stage1:
-            torch.save(self.sbert.state_dict(), out_dir + "sbert.pt")
-            torch.save(self.mlp.state_dict(), out_dir + "mlp.pt")
-            torch.save(self.mlp2.state_dict(), out_dir + "mlp2.pt")
+            sbert_buffer = io.BytesIO()
+            mlp_buffer = io.BytesIO()
+            mlp2_buffer = io.BytesIO()
+
+            torch.save(self.sbert.state_dict(), sbert_buffer)
+            torch.save(self.mlp.state_dict(), mlp_buffer)
+            torch.save(self.mlp2.state_dict(), mlp2_buffer)
+
+            self.api.upload_file(
+                path_or_fileobj=sbert_buffer,
+                path_in_repo=out_dir + "sbert.pt",
+                repo_id=self.repo_id,
+            )
+            self.api.upload_file(
+                path_or_fileobj=mlp_buffer,
+                path_in_repo=out_dir + "mlp.pt",
+                repo_id=self.repo_id,
+            )
+            self.api.upload_file(
+                path_or_fileobj=mlp2_buffer,
+                path_in_repo=out_dir + "mlp2.pt",
+                repo_id=self.repo_id,
+            )
 
         out_dir += f"{args.llm}_{epoch2}_"
         if args.pretrain_stage2:
-            torch.save(self.log_emb_proj.state_dict(), out_dir + "log_proj.pt")
-            torch.save(self.item_emb_proj.state_dict(), out_dir + "item_proj.pt")
+            log_proj_buffer = io.BytesIO()
+            item_proj_buffer = io.BytesIO()
+
+            torch.save(self.log_emb_proj.state_dict(), log_proj_buffer)
+            torch.save(self.item_emb_proj.state_dict(), item_proj_buffer)
+
+            self.api.upload_file(
+                path_or_fileobj=log_proj_buffer,
+                path_in_repo=out_dir + "log_proj.pt",
+                repo_id=self.repo_id,
+            )
+            self.api.upload_file(
+                path_or_fileobj=item_proj_buffer,
+                path_in_repo=out_dir + "item_proj.pt",
+                repo_id=self.repo_id,
+            )
 
     def load_model(self, args, phase1_epoch=None, phase2_epoch=None):
-        out_dir = f"./ML/models/saved_models/{args.rec_pre_trained_data}_{args.recsys}_{phase1_epoch}_"
+        out_dir = f"{args.rec_pre_trained_data}_{args.recsys}_{phase1_epoch}_"
 
         # Item Encoder load
-        mlp = torch.load(out_dir + "mlp.pt", map_location=args.device)
-        self.mlp.load_state_dict(mlp)
-        del mlp
+        mlp_path = hf_hub_download(repo_id=self.repo_id, filename=out_dir + "mlp.pt")
+        mlp_weights = torch.load(mlp_path, map_location=args.device)
+        self.mlp.load_state_dict(mlp_weights)
+        del mlp_weights
         for name, param in self.mlp.named_parameters():
             param.requires_grad = False
 
         # Text Encoder load
-        mlp2 = torch.load(out_dir + "mlp2.pt", map_location=args.device)
-        self.mlp2.load_state_dict(mlp2)
-        del mlp2
+        mlp2_path = hf_hub_download(repo_id=self.repo_id, filename=out_dir + "mlp2.pt")
+        mlp2_weights = torch.load(mlp2_path, map_location=args.device)
+        self.mlp2.load_state_dict(mlp2_weights)
+        del mlp2_weights
         for name, param in self.mlp2.named_parameters():
             param.requires_grad = False
 
         # SBERT model load
-        sbert = torch.load(out_dir + "sbert.pt", map_location=args.device)
-        self.sbert.load_state_dict(sbert)
-        del sbert
+        sbert_path = hf_hub_download(
+            repo_id=self.repo_id, filename=out_dir + "sbert.pt"
+        )
+        sbert_weights = torch.load(sbert_path, map_location=args.device)
+        self.sbert.load_state_dict(sbert_weights)
+        del sbert_weights
         for name, param in self.sbert.named_parameters():
             param.requires_grad = False
 
         if args.inference:
             out_dir += f"{args.llm}_{phase2_epoch}_"
 
-            log_emb_proj_dict = torch.load(
-                out_dir + "log_proj.pt", map_location=args.device
+            log_proj_path = hf_hub_download(
+                repo_id=self.repo_id, filename=out_dir + "log_proj.pt"
             )
-            self.log_emb_proj.load_state_dict(log_emb_proj_dict)
-            del log_emb_proj_dict
+            log_proj_weights = torch.load(log_proj_path, map_location=args.device)
+            self.log_emb_proj.load_state_dict(log_proj_weights)
+            del log_proj_weights
 
-            item_emb_proj_dict = torch.load(
-                out_dir + "item_proj.pt", map_location=args.device
+            item_proj_path = hf_hub_download(
+                repo_id=self.repo_id, filename=out_dir + "item_proj.pt"
             )
-            self.item_emb_proj.load_state_dict(item_emb_proj_dict)
-            del item_emb_proj_dict
+            item_proj_weights = torch.load(item_proj_path, map_location=args.device)
+            self.item_emb_proj.load_state_dict(item_proj_weights)
+            del item_proj_weights
 
     def find_item_text(self, item, title_flag=True, description_flag=True):
         t = "title"
@@ -154,11 +199,11 @@ class A_llmrec_model(nn.Module):
         d_ = "No Description"
         if title_flag and description_flag:
             return [
-                f'"{self.text_name_dict[t].get(i,t_)}, {self.text_name_dict[d].get(i,d_)}"'
+                f'"{clean_text(self.text_name_dict[t].get(i,t_))}, {self.text_name_dict[d].get(i,d_)}"'
                 for i in item
             ]
         elif title_flag and not description_flag:
-            return [f'"{self.text_name_dict[t].get(i,t_)}"' for i in item]
+            return [f'"{clean_text(self.text_name_dict[t].get(i,t_))}"' for i in item]
         elif not title_flag and description_flag:
             return [f'"{self.text_name_dict[d].get(i,d_)}"' for i in item]
 
@@ -173,9 +218,9 @@ class A_llmrec_model(nn.Module):
             return f'"{self.text_name_dict[t].get(item,t_)}, {self.text_name_dict[d].get(item,d_)}"'
         elif title_flag and not description_flag:
             if mode == "inference":
-                return f'"{self.text_name_dict[t].get(item,t_)}(ID: {item})"'
+                return f'"{clean_text(self.text_name_dict[t].get(item,t_))}"'
             else:
-                return f'"{self.text_name_dict[t].get(item,t_)}"'
+                return f'"{clean_text(self.text_name_dict[t].get(item,t_))}"'
 
         elif not title_flag and description_flag:
             return f'"{self.text_name_dict[d].get(item,d_)}"'
@@ -416,17 +461,19 @@ class A_llmrec_model(nn.Module):
         candidate_ids = [
             item for item in candidate_ids if item not in self.missing_items
         ]
+        candidate_mapper = {}
         for candidate in candidate_ids:
             title = self.find_item_text_single(
                 candidate, title_flag=True, description_flag=False, mode="inference"
             )
             candidate_text.append(title + "[CandidateEmb]")
+            candidate_mapper[title] = candidate
 
         random_ = np.random.permutation(len(candidate_text))
         candidate_text = np.array(candidate_text)[random_]
         candidate_ids = np.array(candidate_ids)[random_]
 
-        return ",".join(candidate_text), candidate_ids
+        return ",".join(candidate_text), candidate_ids, candidate_mapper
 
     def pre_train_phase2(self, data, optimizer, batch_iter):
         epoch, total_epoch, step, total_step = batch_iter
@@ -647,15 +694,15 @@ class A_llmrec_model(nn.Module):
             interact_text, interact_ids = self.make_interact_text(seq[seq > 0], 10)
 
             candidate_num = 20
-            candidate_text, candidate_ids = self.make_candidate_text_inference(
-                seq[seq > 0], candidate_num
+            candidate_text, candidate_ids, candidate_mapper = (
+                self.make_candidate_text_inference(seq[seq > 0], candidate_num)
             )
 
             # 영화 추천
             input_text = ""
             input_text += " is a user representation. This user has watched "
             input_text += interact_text
-            input_text += " in the previous. Recommend one next movie and its ID for this user to watch next from the following movie title set, "
+            input_text += " in the previous. Recommend one next movie for this user to watch next from the following movie title set, "
             input_text += candidate_text
             input_text += ". The recommendation is "
 
@@ -715,6 +762,8 @@ class A_llmrec_model(nn.Module):
             output_text = [text.strip() for text in output_text]
 
         print(text_input[0])
-        print("LLM: " + str(output_text[0]))
 
-        return str(output_text[0])
+        output_key = str(output_text[0])
+        print("LLM: " + output_key)
+
+        return candidate_mapper.get(output_key, None)

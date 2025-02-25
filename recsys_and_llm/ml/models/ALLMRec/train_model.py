@@ -15,8 +15,8 @@ from tqdm import tqdm
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 sys.path.append(root_path)
 
-from ML.models.ALLMRec.a_llmrec_model import *
-from ML.models.ALLMRec.pre_train.sasrec.utils import *
+from ml.models.ALLMRec.a_llmrec_model import *
+from ml.models.ALLMRec.pre_train.sasrec.utils import *
 
 
 def setup_ddp(rank, world_size):
