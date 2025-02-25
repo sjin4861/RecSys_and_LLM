@@ -236,7 +236,7 @@ def review_post(
 def main_prediction(
     request: MainPredictRequest, model_manager, user_collection, item_collection
 ):
-    user_data = user_collection.find_one({"_id": request.user_id})
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
     if not user_data:
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
