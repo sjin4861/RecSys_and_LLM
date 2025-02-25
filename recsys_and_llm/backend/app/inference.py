@@ -1,8 +1,9 @@
 # inference.py
 import numpy as np
-from ml.models.gSASRec.gsasrec_inference import gsasrec_recommend_top5
-from ml.models.TiSASRec.TiSASRec_inference import tisasrec_recommend_top5
-from ml.utils import seq_preprocess
+
+from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import gsasrec_recommend_top5
+from recsys_and_llm.ml.models.TiSASRec.TiSASRec_inference import tisasrec_recommend_top5
+from recsys_and_llm.ml.utils import seq_preprocess
 
 
 def inference(model_manager, user_id, seq, seq_time):

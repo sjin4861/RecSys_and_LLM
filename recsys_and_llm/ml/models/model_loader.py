@@ -4,9 +4,10 @@ import json
 
 import torch
 from huggingface_hub import hf_hub_download
-from ml.models.ALLMRec.a_llmrec_model import A_llmrec_model
-from ml.models.gSASRec.gsasrec_inference import build_model
-from ml.models.TiSASRec.TiSASRec_inference import TiSASRec
+
+from recsys_and_llm.ml.models.ALLMRec.a_llmrec_model import A_llmrec_model
+from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import build_model
+from recsys_and_llm.ml.models.TiSASRec.TiSASRec_inference import TiSASRec
 
 
 class ModelLoader:

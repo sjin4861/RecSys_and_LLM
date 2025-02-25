@@ -6,9 +6,9 @@ from fastapi import FastAPI, Request
 from pymongo import MongoClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from backend.app.config import DB_NAME, MONGO_URI
-from ml.models.model_manager import ModelManager
-from ml.utils import find_cold, get_missing, get_text_name_dict
+from recsys_and_llm.backend.app.config import DB_NAME, MONGO_URI
+from recsys_and_llm.ml.models.model_manager import ModelManager
+from recsys_and_llm.ml.utils import find_cold, get_missing, get_text_name_dict
 
 
 @asynccontextmanager

@@ -2,9 +2,10 @@ import re
 from datetime import datetime
 
 import requests
-from backend.app.config import DEFAULT_IMAGE_URL
-from backend.app.inference import inference
-from backend.app.schemas import *
+
+from recsys_and_llm.backend.app.config import DEFAULT_IMAGE_URL
+from recsys_and_llm.backend.app.inference import inference
+from recsys_and_llm.backend.app.schemas import *
 
 
 def get_item_img(url_lst):

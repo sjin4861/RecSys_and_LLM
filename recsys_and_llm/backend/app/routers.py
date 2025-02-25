@@ -4,9 +4,9 @@ import sys
 from fastapi import APIRouter, Depends
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from backend.app.dependencies import get_dependencies
-from backend.app.schemas import *
-from backend.app.services import *
+from recsys_and_llm.backend.app.dependencies import get_dependencies
+from recsys_and_llm.backend.app.schemas import *
+from recsys_and_llm.backend.app.services import *
 
 router = APIRouter()
 

@@ -5,8 +5,8 @@ import uvicorn
 from fastapi import FastAPI
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from backend.app.dependencies import lifespan
-from backend.app.routers import router
+from recsys_and_llm.backend.app.dependencies import lifespan
+from recsys_and_llm.backend.app.routers import router
 
 app = FastAPI(lifespan=lifespan)
 
