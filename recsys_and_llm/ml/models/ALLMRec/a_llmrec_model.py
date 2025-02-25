@@ -6,11 +6,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 from huggingface_hub import HfApi, hf_hub_download
-from ml.models.ALLMRec.llm4rec import *
-from ml.models.ALLMRec.recsys_model import *
-from ml.utils import *
 from sentence_transformers import SentenceTransformer
 from torch.cuda.amp import autocast as autocast
+
+from recsys_and_llm.ml.models.ALLMRec.llm4rec import *
+from recsys_and_llm.ml.models.ALLMRec.recsys_model import *
+from recsys_and_llm.ml.utils import *
 
 
 class two_layer_mlp(nn.Module):

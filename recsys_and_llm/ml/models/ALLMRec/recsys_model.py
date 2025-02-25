@@ -8,8 +8,9 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from huggingface_hub import HfApi, hf_hub_download
-from ml.models.ALLMRec.pre_train.sasrec.model import SASRec
-from ml.utils import *
+
+from recsys_and_llm.ml.models.ALLMRec.pre_train.sasrec.model import SASRec
+from recsys_and_llm.ml.utils import *
 
 
 def load_checkpoint(repo_id, recsys, pre_trained):

@@ -1,7 +1,7 @@
 # model_manager.py
 from argparse import Namespace
 
-from ml.models.model_loader import ModelLoader
+from recsys_and_llm.ml.models.model_loader import ModelLoader
 
 
 class ModelManager:
