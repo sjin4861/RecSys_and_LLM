@@ -14,3 +14,4 @@ repos:
       - id: commitizen
         stages: [commit-msg]
         type: commit-msg
+

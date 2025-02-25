@@ -211,3 +211,4 @@ poetry run streamlit run recsys_and_llm/front/app.py
 - 모든 의존성은 `poetry`를 통해 관리됩니다. **`pip`을 사용하여 패키지를 직접 설치하지 마세요.**
 - 원활한 설정을 위해 **`poetry`가 전역적으로 설치되어 있는지 확인**하세요.  (위에서 설명한 방식을 따랐다면, 높은 확률로 괜찮을 것입니다.)
 
+
