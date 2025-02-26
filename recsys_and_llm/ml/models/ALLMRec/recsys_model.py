@@ -33,7 +33,9 @@ def load_checkpoint(repo_id, recsys, pre_trained):
     # 필요한 파일 다운로드 (메모리 버퍼 사용)
     file_name = pth_files[0]
     pth_file_path = hf_hub_download(repo_id=repo_id, filename=file_name)
-    kwargs, checkpoint = torch.load(pth_file_path, map_location="cpu")
+    kwargs, checkpoint = torch.load(
+        pth_file_path, map_location="cpu", weights_only=False
+    )
     logging.info("Loaded checkpoint from Hugging Face: %s" % pth_file_path)
     return kwargs, checkpoint
 
