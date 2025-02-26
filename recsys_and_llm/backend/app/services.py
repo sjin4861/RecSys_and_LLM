@@ -190,12 +190,6 @@ def review_post(
     user_name = user_data["userName"]
     review_data = review_collection.find_one({"_id": item_data["_id"]})
 
-    existing_reviews = review_data.get("review", []) if review_data else []
-    if any(review["userName"] == user_name for review in existing_reviews):
-        return ApiResponse(
-            success=False, message="이미 해당 아이템에 리뷰를 등록하셨습니다."
-        )
-
     new_review = {
         "userName": user_name,  # 유저 이름
         "reviewText": request.review,  # 리뷰 내용
@@ -208,26 +202,39 @@ def review_post(
             "review": [new_review],  # 리스트로 초기화
         }
         review_collection.insert_one(new_review_data)
+        seq_update = True
     else:
-        existing_reviews.append(new_review)
-        review_collection.update_one(
-            {"_id": item_data["_id"]},
-            {"$set": {"review": existing_reviews}},  # 리뷰 리스트 업데이트
+        existing_reviews = review_data.get("review", [])
+        if any(review["userName"] == user_name for review in existing_reviews):
+            review_collection.update_one(
+                {"_id": item_data["_id"], "reviews.userName": user_name},
+                {"$set": {"reviews.$.review": new_review}},
+            )
+            seq_update = False
+        else:
+            existing_reviews.append(new_review)
+            review_collection.update_one(
+                {"_id": item_data["_id"]},
+                {
+                    "$set": {"review": existing_reviews}
+                },  # 리뷰 리스트 업데이트 - 새로운 리뷰 추가
+            )
+            seq_update = True
+
+    if seq_update:
+        # 유저 시퀀스 업데이트
+        new_item = {
+            "itemnum": item_data["_id"],
+            "asin": item_data["asin"],
+            "reviewText": request.review,
+            "overall": request.rating,
+            "summary": "",
+            "unixReviewTime": int(datetime.utcnow().timestamp()),  # 현재 시간 기준
+        }
+
+        user_collection.update_one(
+            {"_id": user_data["_id"]}, {"$push": {"items": new_item}}
         )
-
-    # 유저 시퀀스 업데이트
-    new_item = {
-        "itemnum": item_data["_id"],
-        "asin": item_data["asin"],
-        "reviewText": request.review,
-        "overall": request.rating,
-        "summary": "",
-        "unixReviewTime": int(datetime.utcnow().timestamp()),  # 현재 시간 기준
-    }
-
-    user_collection.update_one(
-        {"_id": user_data["_id"]}, {"$push": {"items": new_item}}
-    )
 
     return ApiResponse(success=True, message="리뷰 작성 성공")
 
