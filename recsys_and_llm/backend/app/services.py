@@ -207,8 +207,8 @@ def review_post(
         existing_reviews = review_data.get("review", [])
         if any(review["userName"] == user_name for review in existing_reviews):
             review_collection.update_one(
-                {"_id": item_data["_id"], "reviews.userName": user_name},
-                {"$set": {"reviews.$.review": new_review}},
+                {"_id": item_data["_id"], "review.userName": user_name},
+                {"$set": {"review.$": new_review}},
             )
             seq_update = False
         else:
@@ -252,6 +252,7 @@ def main_prediction(
     seq_time = [
         (item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])
     ]
+    print(seq)
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
