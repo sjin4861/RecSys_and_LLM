@@ -7,7 +7,7 @@ def check_login():
     세션에서 로그인 여부 확인
     """
 
-    if "user_id" not in st.session_state or st.session_state.user_id == "":
+    if "reviewer_id" not in st.session_state or st.session_state.reviewer_id == "":
         st.warning("로그인 상태가 아닙니다. 로그인 페이지로 이동합니다.")
         st.switch_page("app.py")
         return False
@@ -50,9 +50,11 @@ def init_session_state():
     """
     Streamlit 세션 상태 초기화
     """
-    if "user_id" not in st.session_state:
-        st.session_state.user_id = ""
-    if "rec_results" not in st.session_state:
-        st.session_state.rec_results = None
+    if "reviewer_id" not in st.session_state:
+        st.session_state.reviewer_id = ""
+    if "user_name" not in st.session_state:
+        st.session_state.user_name = ""
+    if "predictions" not in st.session_state:
+        st.session_state.predictions = None
     if "selected" not in st.session_state:
         st.session_state.selected = None
