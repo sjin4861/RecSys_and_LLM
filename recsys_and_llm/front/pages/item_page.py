@@ -15,8 +15,11 @@ def main():
     st.session_state.selected = st.query_params["item"]
     st.session_state.user_name = st.query_params["name"]
     st.session_state.predictions = requests.post(
-        f'{os.environ.get("BACK_URL")}/main',
-        json={"reviewer_id": st.session_state.reviewer_id},
+        f'{os.environ.get("BACK_URL")}/detail',
+        json={
+            "reviewer_id": st.session_state.reviewer_id,
+            "item_id": st.session_state.selected,
+        },
     ).json()["data"]["predictions"]
 
     if st.session_state.reviewer_id == "":
@@ -33,7 +36,7 @@ def main():
             st.header("")
             rec_line(
                 f"{item_title}와 유사한 작품",
-                st.session_state.predictions["prediction-2"],
+                st.session_state.predictions,
             )
 
             _, logout_btn, _ = st.columns([0.775, 0.2, 0.775])
