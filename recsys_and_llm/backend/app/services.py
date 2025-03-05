@@ -4,7 +4,7 @@ from datetime import datetime
 import requests
 
 from recsys_and_llm.backend.app.config import DEFAULT_IMAGE_URL
-from recsys_and_llm.backend.app.inference import inference
+from recsys_and_llm.backend.app.inference import inference, item_content_inference
 from recsys_and_llm.backend.app.schemas import *
 
 
@@ -154,8 +154,16 @@ def detail_prediction(
     else:
         description = "No Description Available"
 
-    # 모델 추론 - 찬미님 모델
-    predictions = []
+    predictions = item_content_inference(model_manager, item_data["_id"])
+    items = item_collection.find(
+        {"_id": {"$in": predictions}}, {"_id": 1, "available_images": 1}
+    )
+    item_map = {
+        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+    }
+    predictions = [
+        {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in predictions
+    ]
 
     # 5. 반환할 데이터 구성
     return ApiResponse(
