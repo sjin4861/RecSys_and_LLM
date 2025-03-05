@@ -3,17 +3,15 @@ from typing import AnyStr, List
 
 import streamlit as st
 from front.utils.image_utils import show_img
-from front.utils.item_utils import get_detail
 
 
 @st.cache_data
-def rec_main(user_id: str, item_id: str):
-    if not item_id:
+def rec_main(item: dict):
+    if not item:
         st.warning("추천 결과가 없습니다.")
         return
 
-    item_info = get_detail(item_id)
-    st.header(f"{user_id}님 지금 이 영화 어떠세요?")
+    st.header(f"{st.session_state.user_name}님 지금 이 영화 어떠세요?")
 
     # 이미지와 링크 표시
     html = f"""
@@ -41,8 +39,8 @@ def rec_main(user_id: str, item_id: str):
         }}
     </style>
     <div class="image-container">
-        <a href={os.environ.get("FRONT_URL")}/item_page/?user={st.session_state.user_id}&item={item_id} target = '_self'>
-            <img src="{item_info['img_url']}">
+        <a href={os.environ.get("FRONT_URL")}/item_page/?user={st.session_state.reviewer_id}&name={st.session_state.user_name}&item={item["item_id"]} target = '_self'>
+            <img src="{item['img_url']}">
         </a>
     </div>
     """
@@ -50,23 +48,22 @@ def rec_main(user_id: str, item_id: str):
     st.header("")
 
 
-def rec_line(head: str, rec_results: List[AnyStr]):
-    if not rec_results or len(rec_results) == 0:
+def rec_line(head: str, predictions: List[AnyStr]):
+    if not predictions or len(predictions) == 0:
         st.warning("추천 결과가 없습니다.")
         return
 
     st.subheader(head)
 
-    k = len(rec_results)
+    k = len(predictions)
     columns = st.columns([0.4] * k)
 
-    for idx, item_id in enumerate(rec_results):
-        # item_info fetches details for each item in the rec_results
+    for idx, item in enumerate(predictions):
+        # item_info fetches details for each item in the predictions
         with columns[idx]:
-            item_info = get_detail(item_id)
             show_img(
-                item_id,
-                item_info["img_url"],
+                item["item_id"],
+                item["img_url"],
             )
 
 
@@ -79,13 +76,3 @@ def search(searchterm: str):
             res.append(t)
     print(res)
     return res
-
-
-@st.dialog("More information")
-def info_modal(item_id: str = None):
-    item_info = get_detail(item_id)
-    st.image(item_info["img_url"])
-    st.header(item_info["item_title"])
-    st.text(f"출연진: {item_info['people']}")
-    st.text(f"개봉일: {item_info['release']}")
-    st.text(f"평균 평점: {item_info['avg_score']}")
