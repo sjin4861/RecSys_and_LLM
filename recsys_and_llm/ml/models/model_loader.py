@@ -72,16 +72,29 @@ class ModelLoader:
         self.gsasrec_model.load_state_dict(torch.load(model_file, map_location="cpu"))
         self.gsasrec_model.eval()
 
+    def _load_contentrec(self):
+        """모델 로드"""
+        self.item_contents_emb = torch.load(
+            hf_hub_download(
+                repo_id="PNUDI/Item_based",
+                filename="item_text_emb_SB.pt",
+                repo_type="model",
+            ),
+            weights_only=False,
+        )
+
     def _load_models(self):
         self._load_allmrec()
         self._load_tisasrec()
         self._load_gsasrec()
+        self._load_contentrec()
 
     def get_models(self):
         return {
             "allmrec_model": self.allmrec_model,
             "tisasrec_model": self.tisasrec_model,
             "gsasrec_model": self.gsasrec_model,
+            "contentrec_model": self.item_contents_emb,
             "tisasrec_args": self.tisasrec_args,
             "gsasrec_args": self.gsasrec_args,
         }
