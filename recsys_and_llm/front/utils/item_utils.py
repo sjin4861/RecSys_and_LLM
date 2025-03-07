@@ -59,11 +59,11 @@ def get_rating(item_id: str, review: str):
 
 
 def show_reviews(reviews: List[dict[AnyStr, AnyStr]], item_id):
-    for r in reviews:
+    for i, r in enumerate(reviews):
         st.markdown(f":blue-background[**{r['user_name']}**]", unsafe_allow_html=True)
         st_star_rating(
             label="",
-            key=f"rating_in_container_{r['user_name']}_{item_id}",
+            key=f"rating_in_container_{r['user_name']}_{item_id}_{i}",
             maxValue=5,
             defaultValue=r["rating"],
             read_only=True,
