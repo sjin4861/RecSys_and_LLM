@@ -97,15 +97,12 @@ def show_info(item_id: str):
         st.markdown(
             f"**CAST** : {', '.join(item_info['cast'])}" if item_info["cast"] else ""
         )
-        st.markdown(
-            f"**Description** : {item_info['description']}"
-            if item_info["description"]
-            else ""
-        )
-        # st.markdown(f"**Rating** : {item_info['avg_score']}")
+        with st.container(height=100, border=False):
+            st.markdown(f"**Description** : {item_info['description']}")
+
         st.subheader("Comment")
         container_height = (
-            330
+            350
             - (0 if item_info["reviews"]["my_rating"] is None else 25)
             - (0 if item_info["reviews"]["my_review"] is None else 25)
         )
