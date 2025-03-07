@@ -38,7 +38,7 @@ def main():
     if "dialog" not in st.session_state:
         st.session_state.dialog = []
 
-    user_id = st.session_state.user_id
+    reviewer_id = st.session_state.reviewer_id
 
     # ----------------------------------------------------------------
     # (A) CSS 스타일 로드: 기본 스타일 외에 사용자 메시지 정렬을 반전
@@ -52,7 +52,7 @@ def main():
         st.markdown("## 대화 관리")
         st.markdown("---")
         st.markdown("### 저장된 대화 불러오기 📂")
-        saved_conversations = retrieve_all_conversations(user_id)
+        saved_conversations = retrieve_all_conversations(reviewer_id)
 
         if not saved_conversations:
             st.write("저장된 대화 세션이 없습니다.")
@@ -69,7 +69,7 @@ def main():
 
             if st.button("불러오기", key="load_convo_button"):
                 selected_conversation_id = conversation_dict[chosen_session]
-                st.info(load_conversation(user_id, selected_conversation_id))
+                st.info(load_conversation(reviewer_id, selected_conversation_id))
 
         st.markdown("---")
 
@@ -79,7 +79,7 @@ def main():
             title = st.text_input("대화 제목 입력")
             submitted = st.form_submit_button("저장하기")
             if submitted:
-                st.info(save_conversation(title, user_id))
+                st.info(save_conversation(title, reviewer_id))
 
     # ----------------------------------------------------------------
     # (C) 메인 영역: 모델 선택 및 채팅 인터페이스
