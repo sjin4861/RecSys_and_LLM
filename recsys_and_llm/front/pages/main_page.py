@@ -14,14 +14,14 @@ def main():
     if "user" in st.query_params.keys():
         st.session_state.reviewer_id = st.query_params["user"]
         st.session_state.user_name = st.query_params["name"]
-        st.session_state.predictions = requests.post(
-            f'{os.environ.get("BACK_URL")}/main',
-            json={"reviewer_id": st.session_state.reviewer_id},
-        ).json()["data"]["predictions"]
-
     else:
         st.query_params["user"] = st.session_state.reviewer_id
         st.query_params["name"] = st.session_state.user_name
+
+    st.session_state.predictions = requests.post(
+        f'{os.environ.get("BACK_URL")}/main',
+        json={"reviewer_id": st.session_state.reviewer_id},
+    ).json()["data"]["predictions"]
 
     if st.session_state.reviewer_id == "":
         st.switch_page("./app.py")
