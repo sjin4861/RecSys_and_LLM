@@ -311,15 +311,15 @@ def rec_load(request: RecommendResultRequest, user_collection, rec_collection):
     if not rec_data:
         return ApiResponse(success=False, message="추천 결과가 존재하지 않습니다.")
 
-    return {
-        "success": True,
-        "message": "추천 결과 로드 성공",
-        "data": {
+    return ApiResponse(
+        success=True,
+        message="추천 결과 로드 성공",
+        data={
             "user_id": user_data["_id"],
             "name": user_data["userName"],
             "predictions": rec_data["predictions"],
         },
-    }
+    )
 
 
 # for test
