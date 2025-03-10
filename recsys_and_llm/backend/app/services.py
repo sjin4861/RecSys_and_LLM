@@ -239,6 +239,54 @@ def review_post(
     return ApiResponse(success=True, message="리뷰 작성 성공")
 
 
+def conv_save(request: ConversationSaveRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    conversation_data = request.dict()
+    conv_collection.insert_one(conversation_data)
+
+    return ApiResponse(success=True, message="대화 저장 성공")
+
+
+def conv_load(request: ConversationLoadRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    conversation = conv_collection.find_one(
+        {"conversation_id": request.conversation_id}
+    )
+
+    if not conversation:
+        return ApiResponse(success=False, message="존재하지 않는 대화입니다.")
+
+    return ApiResponse(success=True, message="대화 내용 로드 성공", data=conversation)
+
+
+def conv_list(request: ConversationListRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    conversations = conv_collection.find(
+        {"reviewerID": request.reviewer_id},
+        {"conversation_id": 1, "conversation_title": 1, "_id": 0},
+    )
+    conversations_list = list(conversations)
+
+    if not conversations_list:
+        return ApiResponse(success=False, message="대화가 존재하지 않습니다.")
+
+    return ApiResponse(
+        success=True, message="대화 리스트 로드 성공", data=conversations_list
+    )
+
+
 # for test
 def main_prediction(
     request: MainPredictRequest, model_manager, user_collection, item_collection

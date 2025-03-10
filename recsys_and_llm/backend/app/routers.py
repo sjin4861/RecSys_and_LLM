@@ -49,6 +49,27 @@ def predict(request: ReviewPostRequest, dependencies: dict = Depends(get_depende
     )
 
 
+@router.post("/conv-save")
+def predict(
+    request: ConversationSaveRequest, dependencies: dict = Depends(get_dependencies)
+):
+    return conv_save(request, dependencies["user"], dependencies["conversation"])
+
+
+@router.post("/conv-load")
+def predict(
+    request: ConversationLoadRequest, dependencies: dict = Depends(get_dependencies)
+):
+    return conv_load(request, dependencies["user"], dependencies["conversation"])
+
+
+@router.post("/conv-list")
+def predict(
+    request: ConversationListRequest, dependencies: dict = Depends(get_dependencies)
+):
+    return conv_list(request, dependencies["user"], dependencies["conversation"])
+
+
 # for test
 @router.post("/main")
 def predict(
