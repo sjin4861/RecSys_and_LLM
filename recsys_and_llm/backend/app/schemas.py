@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -25,6 +25,32 @@ class ReviewPostRequest(BaseModel):
     reviewer_id: str
     review: str
     rating: str
+
+
+# Conversation
+class DialogEntry(BaseModel):
+    text: str
+    speaker: str
+    feedback: Optional[str] = None
+    entity: Optional[Union[List[str], None]] = None
+    date_time: str  # ISO format string representation
+
+
+class ConversationSaveRequest(BaseModel):
+    conversation_id: str
+    conversation_title: str
+    reviewer_id: str
+    pipeline: str
+    dialog: List[DialogEntry]
+
+
+class ConversationLoadRequest(BaseModel):
+    conversation_id: str
+    reviewer_id: str
+
+
+class ConversationListRequest(BaseModel):
+    reviewer_id: str
 
 
 # for test
