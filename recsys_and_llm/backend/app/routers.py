@@ -23,6 +23,7 @@ def predict(request: SignInRequest, dependencies: dict = Depends(get_dependencie
         dependencies["model_manager"],
         dependencies["user"],
         dependencies["item"],
+        dependencies["recommend"],
     )
 
 
@@ -68,6 +69,18 @@ def predict(
     request: ConversationListRequest, dependencies: dict = Depends(get_dependencies)
 ):
     return conv_list(request, dependencies["user"], dependencies["conversation"])
+
+
+# for test
+@router.post("/rec-load")
+def predict(
+    request: RecommendResultRequest, dependencies: dict = Depends(get_dependencies)
+):
+    return rec_load(
+        request,
+        dependencies["user"],
+        dependencies["recommend"],
+    )
 
 
 # for test

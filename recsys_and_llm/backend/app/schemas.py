@@ -53,6 +53,10 @@ class ConversationListRequest(BaseModel):
     reviewer_id: str
 
 
+class RecommendResultRequest(BaseModel):
+    reviewer_id: str
+
+
 # for test
 class MainPredictRequest(BaseModel):
     reviewer_id: str
