@@ -47,7 +47,13 @@ def sign_up(request: SignUpRequest, user_collection):
     )
 
 
-def sign_in(request: SignInRequest, model_manager, user_collection, item_collection):
+def sign_in(
+    request: SignInRequest,
+    model_manager,
+    user_collection,
+    item_collection,
+    rec_collection,
+):
     user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
     if not user_data:
@@ -96,6 +102,13 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
         ],
         "prediction-4": [],  # 장르 모델 완성 후 추가 예정
     }
+
+    # 로그인 할 때마다 추천 테이블 업데이트
+    rec_collection.update_one(
+        {"reviewerID": user_data["reviewerID"]},
+        {"$set": {"predictions": predictions, "timestamp": datetime.utcnow()}},
+        upsert=True,
+    )
 
     return ApiResponse(
         success=True,
@@ -285,6 +298,28 @@ def conv_list(request: ConversationListRequest, user_collection, conv_collection
     return ApiResponse(
         success=True, message="대화 리스트 로드 성공", data=conversations_list
     )
+
+
+def rec_load(request: RecommendResultRequest, user_collection, rec_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    rec_data = rec_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not rec_data:
+        return ApiResponse(success=False, message="추천 결과가 존재하지 않습니다.")
+
+    return {
+        "success": True,
+        "message": "추천 결과 로드 성공",
+        "data": {
+            "user_id": user_data["_id"],
+            "name": user_data["userName"],
+            "predictions": rec_data["predictions"],
+        },
+    }
 
 
 # for test
