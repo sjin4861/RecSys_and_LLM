@@ -121,7 +121,12 @@ def sign_in(
     # 로그인 할 때마다 추천 테이블 업데이트
     rec_collection.update_one(
         {"reviewerID": user_data["reviewerID"]},
-        {"$set": {"predictions": predictions, "timestamp": datetime.utcnow()}},
+        {
+            "$set": {
+                "predictions": predictions,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+        },
         upsert=True,
     )
 
@@ -273,7 +278,28 @@ def conv_save(request: ConversationSaveRequest, user_collection, conv_collection
     if not user_data:
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
 
-    conversation_data = request.dict()
+    if conv_collection.find_one({"_id": request.conversation_id}):
+        return ApiResponse(success=False, message="이미 존재하는 대화입니다.")
+
+    conversation_data = {
+        "_id": request.conversation_id,  # MongoDB _id 필드에 conversation_id 저장
+        "conversation_title": request.conversation_title,
+        "reviewerID": user_data["reviewerID"],
+        "pipeline": request.pipeline,
+        "dialog": [
+            {
+                "text": entry.text,
+                "speaker": entry.speaker,
+                "feedback": entry.feedback,
+                "entity": entry.entity,
+                "date_time": (
+                    datetime.fromisoformat(entry.date_time) if entry.date_time else None
+                ),
+            }
+            for entry in request.dialog
+        ],
+    }
+
     conv_collection.insert_one(conversation_data)
 
     return ApiResponse(success=True, message="대화 저장 성공")
@@ -285,9 +311,7 @@ def conv_load(request: ConversationLoadRequest, user_collection, conv_collection
     if not user_data:
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
 
-    conversation = conv_collection.find_one(
-        {"conversation_id": request.conversation_id}
-    )
+    conversation = conv_collection.find_one({"_id": request.conversation_id})
 
     if not conversation:
         return ApiResponse(success=False, message="존재하지 않는 대화입니다.")
@@ -303,9 +327,15 @@ def conv_list(request: ConversationListRequest, user_collection, conv_collection
 
     conversations = conv_collection.find(
         {"reviewerID": request.reviewer_id},
-        {"conversation_id": 1, "conversation_title": 1, "_id": 0},
+        {"_id": 1, "conversation_title": 1},
     )
-    conversations_list = list(conversations)
+    conversations_list = [
+        {
+            "conversation_id": str(conv["_id"]),  # _id를 conversation_id로 변경
+            "conversation_title": conv["conversation_title"],
+        }
+        for conv in conversations
+    ]
 
     if not conversations_list:
         return ApiResponse(success=False, message="대화가 존재하지 않습니다.")
