@@ -88,7 +88,9 @@ def sign_in(
     item_map = {
         item["_id"]: {
             "image": get_item_img(item.get("available_images", [])),
-            "title": item.get("title", "Unknown"),  # title 추가, 기본값 "Unknown"
+            "title": item.get(
+                "title", "Unknown"
+            ).strip(),  # title 추가, 기본값 "Unknown"
         }
         for item in items
     }
