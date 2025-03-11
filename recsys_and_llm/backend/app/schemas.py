@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
@@ -32,7 +32,7 @@ class DialogEntry(BaseModel):
     text: str
     speaker: str
     feedback: Optional[str] = None
-    entity: Optional[Union[List[str], None]] = None
+    entity: Optional[List[str]] = None
     date_time: str  # ISO format string representation
 
 
