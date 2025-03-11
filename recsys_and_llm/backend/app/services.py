@@ -82,23 +82,38 @@ def sign_in(
 
     all_ids = list(set(allmrec_ids + gsasrec_ids + tisasrec_ids))  # 중복 제거
     items = item_collection.find(
-        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
+        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1, "title": 1}
     )
 
     item_map = {
-        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+        item["_id"]: {
+            "image": get_item_img(item.get("available_images", [])),
+            "title": item.get("title", "Unknown"),  # title 추가, 기본값 "Unknown"
+        }
+        for item in items
     }
 
     predictions = {
         "prediction-1": {
             "item_id": allmrec_ids[0],
-            "img_url": item_map.get(allmrec_ids[0], None),
+            "img_url": item_map.get(allmrec_ids[0], {}).get("image"),
+            "title": item_map.get(allmrec_ids[0], {}).get("title"),
         },
         "prediction-2": [
-            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in gsasrec_ids
+            {
+                "item_id": _id,
+                "img_url": item_map.get(_id, {}).get("image"),
+                "title": item_map.get(_id, {}).get("title"),
+            }
+            for _id in gsasrec_ids
         ],
         "prediction-3": [
-            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in tisasrec_ids
+            {
+                "item_id": _id,
+                "img_url": item_map.get(_id, {}).get("image"),
+                "title": item_map.get(_id, {}).get("title"),
+            }
+            for _id in tisasrec_ids
         ],
         "prediction-4": [],  # 장르 모델 완성 후 추가 예정
     }
