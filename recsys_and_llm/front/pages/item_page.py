@@ -35,7 +35,7 @@ def main():
 
             st.header("")
             rec_line(
-                f"{item_title}와 유사한 작품",
+                f"Movies similar to {item_title}",
                 st.session_state.predictions,
             )
 
