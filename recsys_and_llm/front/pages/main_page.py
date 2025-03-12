@@ -40,14 +40,15 @@ def main():
 
         rec_main(st.session_state.predictions["prediction-1"])
         rec_line(
-            f"{st.session_state.user_name}님을 위한 추천",
+            f"Recommendations for {st.session_state.user_name}",
             st.session_state.predictions["prediction-2"],
         )
         rec_line(
-            f"최근 본 작품과 유사한 작품", st.session_state.predictions["prediction-3"]
+            f"Similar movies to what you've watched recently",
+            st.session_state.predictions["prediction-3"],
         )
         rec_line(
-            f"{st.session_state.user_name}님이 좋아하는 공포영화",
+            f"Movies in the horror genre that {st.session_state.user_name} likes",  # TODO 장르기반 추천
             st.session_state.predictions["prediction-3"],
         )
 

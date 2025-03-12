@@ -11,7 +11,7 @@ def rec_main(item: dict):
         st.warning("추천 결과가 없습니다.")
         return
 
-    st.header(f"{st.session_state.user_name}님, 지금 Title 어떠세요?")  # TODO title
+    st.header(f"{st.session_state.user_name}! How about {item['title']}?")
 
     # 이미지와 링크 표시
     html = f"""
@@ -77,6 +77,7 @@ def rec_line(head: str, predictions: List[AnyStr]):
             show_img(
                 item["item_id"],
                 item["img_url"],
+                item["title"],
             )
 
 
