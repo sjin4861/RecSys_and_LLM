@@ -19,7 +19,7 @@ def main():
         st.query_params["name"] = st.session_state.user_name
 
     st.session_state.predictions = requests.post(
-        f'{os.environ.get("BACK_URL")}/main',
+        f'{os.environ.get("BACK_URL")}/rec-load',
         json={"reviewer_id": st.session_state.reviewer_id},
     ).json()["data"]["predictions"]
 
