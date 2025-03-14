@@ -42,7 +42,8 @@ def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
     model = model.to(args.device)
     seq = torch.tensor(seq, dtype=torch.long)
     seq = seq.to(args.device)
-    predictions_num, predictions_score = model.get_predictions(seq, 20)  # 반환값 분리
+    
+    predictions_num, predictions_score = model.get_predictions(seq, 20, rated = seq)  # 반환값 분리
     predictions_num = predictions_num.squeeze(0)
 
     # predictions = predictions[0]
@@ -56,9 +57,9 @@ def gsasrec_recommend_top5(model, user_id, user_sequence, args, missing_list):
     for idx in predictions_num:
         if len(top5_num) == 8:
             break
-        if int(idx.item()) + 1 in missing_list:
+        if int(idx.item()) in missing_list:
             continue
-        top5_num.append(int(idx.item()) + 1)
+        top5_num.append(int(idx.item()))
     # top5_titles = [text_name_dict['title'][int(idx.item()) + 1] for idx in top5_idx]
 
     return top5_num

@@ -80,18 +80,23 @@ class GSASRec(torch.nn.Module):
         return seq_emb, attentions
 
     def get_predictions(self, input, limit, rated=None):
+        #print(input.shape)
         with torch.no_grad():
             model_out, _ = self.forward(input)
+            #print(model_out.shape)
             seq_emb = model_out[:, -1, :]
+            #print(seq_emb.shape)
             output_embeddings = self.get_output_embeddings()
-            # print(output_embeddings.weight.shape)
-            # print(seq_emb.shape)
+            
+            #print(output_embeddings.weight.shape)
+            #print(seq_emb.shape)
             scores = torch.einsum("bd,nd->bn", seq_emb, output_embeddings.weight)
             scores[:, 0] = float("-inf")
             scores[:, self.num_items + 1 :] = float("-inf")
+            #print(scores.shape)
             if rated is not None:
-                for i in range(len(input)):
-                    for j in rated[i]:
-                        scores[i, j] = float("-inf")
+                for i in range(len(rated)):
+                    scores[0, rated[i]] = float("-inf")
+
             result = torch.topk(scores, limit, dim=1)
             return result.indices, result.values

@@ -171,12 +171,13 @@ def tisasrec_recommend_top5(args, model, user_id, user_sequence, missing_list):
         *[np.array(l) for l in [[user_id], [seq], [time_matrix], item_idx]]
     )
     predictions = predictions[0]
-    # print(predictions)
+    for value in seq:
+        predictions[value] = float("-inf")
     # print(predictions[50671])
     # Top-5 아이템 인덱스 추출
     # print(len(predictions))
 
-    top5_idx = predictions.argsort()
+    top5_idx = predictions.argsort(descending=True)[:20]
     # print(top5_idx)
     i = 0
 
@@ -184,8 +185,8 @@ def tisasrec_recommend_top5(args, model, user_id, user_sequence, missing_list):
     for idx in top5_idx:
         if len(top5_num) == 8:
             break
-        if int(idx.item()) + 1 in missing_list:
+        if int(idx.item()) in missing_list:
             continue
-        top5_num.append(int(idx.item()) + 1)
+        top5_num.append(int(idx.item()))
 
     return top5_num
