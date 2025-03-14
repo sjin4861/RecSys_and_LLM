@@ -25,10 +25,12 @@ def find_filepath(target_path, target_word):
 
 
 def get_missing(title_id_dict):
-    exist_ids = np.array(list(title_id_dict.keys()))
+    exist_items = [k for k, v in title_id_dict.items() if v != "No Title"]
 
     return np.setdiff1d(
-        np.arange(1, max(exist_ids) + 1, dtype=np.int32), exist_ids, assume_unique=True
+        np.arange(1, max(exist_items) + 1, dtype=np.int32),
+        exist_items,
+        assume_unique=True,
     ).tolist()
 
 

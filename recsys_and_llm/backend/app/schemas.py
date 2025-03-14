@@ -29,7 +29,7 @@ class ReviewPostRequest(BaseModel):
 
 # for test
 class MainPredictRequest(BaseModel):
-    user_id: str
+    reviewer_id: str
 
 
 # 응답 schema

@@ -2,9 +2,10 @@ import re
 from datetime import datetime
 
 import requests
-from backend.app.config import DEFAULT_IMAGE_URL
-from backend.app.inference import inference
-from backend.app.schemas import *
+
+from recsys_and_llm.backend.app.config import DEFAULT_IMAGE_URL
+from recsys_and_llm.backend.app.inference import inference, item_content_inference
+from recsys_and_llm.backend.app.schemas import *
 
 
 def get_item_img(url_lst):
@@ -153,8 +154,16 @@ def detail_prediction(
     else:
         description = "No Description Available"
 
-    # 모델 추론 - 찬미님 모델
-    predictions = []
+    predictions = item_content_inference(model_manager, item_data["_id"])
+    items = item_collection.find(
+        {"_id": {"$in": predictions}}, {"_id": 1, "available_images": 1}
+    )
+    item_map = {
+        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+    }
+    predictions = [
+        {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in predictions
+    ]
 
     # 5. 반환할 데이터 구성
     return ApiResponse(
@@ -189,12 +198,6 @@ def review_post(
     user_name = user_data["userName"]
     review_data = review_collection.find_one({"_id": item_data["_id"]})
 
-    existing_reviews = review_data.get("review", []) if review_data else []
-    if any(review["userName"] == user_name for review in existing_reviews):
-        return ApiResponse(
-            success=False, message="이미 해당 아이템에 리뷰를 등록하셨습니다."
-        )
-
     new_review = {
         "userName": user_name,  # 유저 이름
         "reviewText": request.review,  # 리뷰 내용
@@ -207,26 +210,39 @@ def review_post(
             "review": [new_review],  # 리스트로 초기화
         }
         review_collection.insert_one(new_review_data)
+        seq_update = True
     else:
-        existing_reviews.append(new_review)
-        review_collection.update_one(
-            {"_id": item_data["_id"]},
-            {"$set": {"review": existing_reviews}},  # 리뷰 리스트 업데이트
+        existing_reviews = review_data.get("review", [])
+        if any(review["userName"] == user_name for review in existing_reviews):
+            review_collection.update_one(
+                {"_id": item_data["_id"], "review.userName": user_name},
+                {"$set": {"review.$": new_review}},
+            )
+            seq_update = False
+        else:
+            existing_reviews.append(new_review)
+            review_collection.update_one(
+                {"_id": item_data["_id"]},
+                {
+                    "$set": {"review": existing_reviews}
+                },  # 리뷰 리스트 업데이트 - 새로운 리뷰 추가
+            )
+            seq_update = True
+
+    if seq_update:
+        # 유저 시퀀스 업데이트
+        new_item = {
+            "itemnum": item_data["_id"],
+            "asin": item_data["asin"],
+            "reviewText": request.review,
+            "overall": request.rating,
+            "summary": "",
+            "unixReviewTime": int(datetime.utcnow().timestamp()),  # 현재 시간 기준
+        }
+
+        user_collection.update_one(
+            {"_id": user_data["_id"]}, {"$push": {"items": new_item}}
         )
-
-    # 유저 시퀀스 업데이트
-    new_item = {
-        "itemnum": item_data["_id"],
-        "asin": item_data["asin"],
-        "reviewText": request.review,
-        "overall": request.rating,
-        "summary": "",
-        "unixReviewTime": int(datetime.utcnow().timestamp()),  # 현재 시간 기준
-    }
-
-    user_collection.update_one(
-        {"_id": user_data["_id"]}, {"$push": {"items": new_item}}
-    )
 
     return ApiResponse(success=True, message="리뷰 작성 성공")
 
@@ -235,7 +251,7 @@ def review_post(
 def main_prediction(
     request: MainPredictRequest, model_manager, user_collection, item_collection
 ):
-    user_data = user_collection.find_one({"_id": request.user_id})
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
     if not user_data:
         return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
@@ -244,6 +260,7 @@ def main_prediction(
     seq_time = [
         (item["itemnum"], item["unixReviewTime"]) for item in user_data.get("items", [])
     ]
+    print(seq)
     if model_manager is None:
         return ApiResponse(success=False, message="모델이 로드되지 않았습니다.")
 
