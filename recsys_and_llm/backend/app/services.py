@@ -283,6 +283,7 @@ def conv_save(request: ConversationSaveRequest, user_collection, conv_collection
     if conv_collection.find_one({"_id": request.conversation_id}):
         return ApiResponse(success=False, message="이미 존재하는 대화입니다.")
 
+    print(user_data["reviewerID"])
     conversation_data = {
         "_id": request.conversation_id,  # MongoDB _id 필드에 conversation_id 저장
         "conversation_title": request.conversation_title,
