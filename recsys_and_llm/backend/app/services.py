@@ -47,7 +47,13 @@ def sign_up(request: SignUpRequest, user_collection):
     )
 
 
-def sign_in(request: SignInRequest, model_manager, user_collection, item_collection):
+def sign_in(
+    request: SignInRequest,
+    model_manager,
+    user_collection,
+    item_collection,
+    rec_collection,
+):
     user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
 
     if not user_data:
@@ -76,26 +82,55 @@ def sign_in(request: SignInRequest, model_manager, user_collection, item_collect
 
     all_ids = list(set(allmrec_ids + gsasrec_ids + tisasrec_ids))  # 중복 제거
     items = item_collection.find(
-        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1}
+        {"_id": {"$in": all_ids}}, {"_id": 1, "available_images": 1, "title": 1}
     )
 
     item_map = {
-        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+        item["_id"]: {
+            "image": get_item_img(item.get("available_images", [])),
+            "title": item.get(
+                "title", "Unknown"
+            ).strip(),  # title 추가, 기본값 "Unknown"
+        }
+        for item in items
     }
 
     predictions = {
         "prediction-1": {
             "item_id": allmrec_ids[0],
-            "img_url": item_map.get(allmrec_ids[0], None),
+            "img_url": item_map.get(allmrec_ids[0], {}).get("image"),
+            "title": item_map.get(allmrec_ids[0], {}).get("title"),
         },
         "prediction-2": [
-            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in gsasrec_ids
+            {
+                "item_id": _id,
+                "img_url": item_map.get(_id, {}).get("image"),
+                "title": item_map.get(_id, {}).get("title"),
+            }
+            for _id in gsasrec_ids
         ],
         "prediction-3": [
-            {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in tisasrec_ids
+            {
+                "item_id": _id,
+                "img_url": item_map.get(_id, {}).get("image"),
+                "title": item_map.get(_id, {}).get("title"),
+            }
+            for _id in tisasrec_ids
         ],
         "prediction-4": [],  # 장르 모델 완성 후 추가 예정
     }
+
+    # 로그인 할 때마다 추천 테이블 업데이트
+    rec_collection.update_one(
+        {"reviewerID": user_data["reviewerID"]},
+        {
+            "$set": {
+                "predictions": predictions,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+        },
+        upsert=True,
+    )
 
     return ApiResponse(
         success=True,
@@ -245,6 +280,102 @@ def review_post(
         )
 
     return ApiResponse(success=True, message="리뷰 작성 성공")
+
+
+def conv_save(request: ConversationSaveRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    if conv_collection.find_one({"_id": request.conversation_id}):
+        return ApiResponse(success=False, message="이미 존재하는 대화입니다.")
+
+    print(user_data["reviewerID"])
+    conversation_data = {
+        "_id": request.conversation_id,  # MongoDB _id 필드에 conversation_id 저장
+        "conversation_title": request.conversation_title,
+        "reviewerID": user_data["reviewerID"],
+        "pipeline": request.pipeline,
+        "dialog": [
+            {
+                "text": entry.text,
+                "speaker": entry.speaker,
+                "feedback": entry.feedback,
+                "entity": entry.entity,
+                "date_time": (
+                    datetime.fromisoformat(entry.date_time) if entry.date_time else None
+                ),
+            }
+            for entry in request.dialog
+        ],
+    }
+
+    conv_collection.insert_one(conversation_data)
+
+    return ApiResponse(success=True, message="대화 저장 성공")
+
+
+def conv_load(request: ConversationLoadRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    conversation = conv_collection.find_one({"_id": request.conversation_id})
+
+    if not conversation:
+        return ApiResponse(success=False, message="존재하지 않는 대화입니다.")
+
+    return ApiResponse(success=True, message="대화 내용 로드 성공", data=conversation)
+
+
+def conv_list(request: ConversationListRequest, user_collection, conv_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    conversations = conv_collection.find(
+        {"reviewerID": request.reviewer_id},
+        {"_id": 1, "conversation_title": 1},
+    )
+    conversations_list = [
+        {
+            "conversation_id": str(conv["_id"]),  # _id를 conversation_id로 변경
+            "conversation_title": conv["conversation_title"],
+        }
+        for conv in conversations
+    ]
+
+    if not conversations_list:
+        return ApiResponse(success=False, message="대화가 존재하지 않습니다.")
+
+    return ApiResponse(
+        success=True, message="대화 리스트 로드 성공", data=conversations_list
+    )
+
+
+def rec_load(request: RecommendResultRequest, user_collection, rec_collection):
+    user_data = user_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not user_data:
+        return ApiResponse(success=False, message="존재하지 않는 유저입니다.")
+
+    rec_data = rec_collection.find_one({"reviewerID": request.reviewer_id})
+
+    if not rec_data:
+        return ApiResponse(success=False, message="추천 결과가 존재하지 않습니다.")
+
+    return ApiResponse(
+        success=True,
+        message="추천 결과 로드 성공",
+        data={
+            "user_id": user_data["_id"],
+            "name": user_data["userName"],
+            "predictions": rec_data["predictions"],
+        },
+    )
 
 
 # for test

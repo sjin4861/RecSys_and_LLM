@@ -20,6 +20,7 @@ async def lifespan(app: FastAPI):
     item_collection = db["item"]
     review_collection = db["review"]
     conversation_collection = db["conversation"]
+    recommend_collection = db["recommend"]
 
     # 모델 사용 데이터 파싱
     cold_items = find_cold(user_collection, 50)
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
     app.state.item = item_collection
     app.state.review = review_collection
     app.state.conversation = conversation_collection
+    app.state.recommend = recommend_collection
 
     yield
 
@@ -53,4 +55,5 @@ def get_dependencies(request: Request):
         "item": request.app.state.item,
         "review": request.app.state.review,
         "conversation": request.app.state.conversation,
+        "recommend": request.app.state.recommend,
     }
