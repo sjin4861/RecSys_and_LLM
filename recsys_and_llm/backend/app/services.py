@@ -138,7 +138,6 @@ def sign_in(
         data={
             "user_id": user_id,
             "name": user_data["userName"],
-            "predictions": predictions,
         },
     )
 
