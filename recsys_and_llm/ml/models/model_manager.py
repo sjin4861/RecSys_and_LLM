@@ -40,6 +40,7 @@ class ModelManager:
         self.tisasrec_model = models["tisasrec_model"]
         self.gsasrec_model = models["gsasrec_model"]
         self.contentrec_model = models["contentrec_model"]
+        self.genrerec_model = models["genrerec_model"]
 
         self.tisasrec_args = models["tisasrec_args"]
         self.gsasrec_args = models["gsasrec_args"]

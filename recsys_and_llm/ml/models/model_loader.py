@@ -4,6 +4,7 @@ import json
 
 import torch
 from huggingface_hub import hf_hub_download
+from transformers import pipeline
 
 from recsys_and_llm.ml.models.ALLMRec.a_llmrec_model import A_llmrec_model
 from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import build_model
@@ -16,6 +17,8 @@ class ModelLoader:
         self.allmrec_model = None
         self.tisasrec_model = None
         self.gsasrec_model = None
+        self.genrerec_model = None
+
         self.tisasrec_args = None
         self.gsasrec_args = None
 
@@ -83,11 +86,20 @@ class ModelLoader:
             weights_only=False,
         )
 
+    def _load_genrerec(self):
+        self.genrerec_model = pipeline(
+            "text-generation",
+            model="unsloth/phi-4-unsloth-bnb-4bit",
+            model_kwargs={"torch_dtype": "auto"},
+            device_map="auto",
+        )
+
     def _load_models(self):
         self._load_allmrec()
         self._load_tisasrec()
         self._load_gsasrec()
         self._load_contentrec()
+        self._load_genrerec()
 
     def get_models(self):
         return {
@@ -95,6 +107,7 @@ class ModelLoader:
             "tisasrec_model": self.tisasrec_model,
             "gsasrec_model": self.gsasrec_model,
             "contentrec_model": self.item_contents_emb,
+            "genrerec_model": self.genrerec_model,
             "tisasrec_args": self.tisasrec_args,
             "gsasrec_args": self.gsasrec_args,
         }

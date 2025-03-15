@@ -117,7 +117,17 @@ def sign_in(
             }
             for _id in tisasrec_ids
         ],
-        "prediction-4": [],  # 장르 모델 완성 후 추가 예정
+        "prediction-4": {
+            "genre": "predicted_genre",
+            "movies": [
+                {
+                    "item_id": _id,
+                    "img_url": item_map.get(_id, {}).get("image"),
+                    "title": item_map.get(_id, {}).get("title"),
+                }
+                for _id in tisasrec_ids
+            ],
+        },
     }
 
     # 로그인 할 때마다 추천 테이블 업데이트
