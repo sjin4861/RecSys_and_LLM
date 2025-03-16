@@ -43,7 +43,6 @@ pipx install poetry
   ```
 
 💡 Poetry는 가상 환경을 **자동으로 감지**하므로, Conda처럼 `activate`하지 않아도 됩니다.  
-💡 자동 감지가 되지만, `poetry shell`을 사용하면 Conda처럼 활성화할 수도 있습니다.  
 💡 또한, `poetry run`을 붙이면 명령어를 Poetry 환경에서 실행할 수 있습니다.  
 
 ---
