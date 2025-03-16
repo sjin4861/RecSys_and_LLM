@@ -53,7 +53,7 @@ class LlamaAgent(BasePipeline):
             max_new_tokens=max_tokens,
             temperature=self.temperature,
             do_sample=True,
-            top_k=50,  # 필요에 따라 top_k 값을 조정할 수 있습니다.
+            top_k=5,  # 필요에 따라 top_k 값을 조정할 수 있습니다.
             **kwargs,
         )
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)

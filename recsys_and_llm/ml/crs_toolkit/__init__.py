@@ -11,6 +11,9 @@ from .modules.llm import (
     ChatgptGen,
     ChatgptRec,
     ChatgptTokenizer,
+    LlamaGen,
+    LlamaRec,
+    LlamaTokenizer,
     LLMConfig,
     LLMRecConfig,
 )
@@ -18,5 +21,7 @@ from .modules.monitor import monitor, monitoring
 from .pipelines import (
     ChatgptAgent,
     ChatgptAgentConfig,
+    LlamaAgent,
+    LlamaAgentConfig,
 )
 from .tokenizer_utils import BaseTokenizer

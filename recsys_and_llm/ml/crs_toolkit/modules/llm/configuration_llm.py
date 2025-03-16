@@ -14,7 +14,7 @@ class LLMConfig(BaseConfig):
 
     def __init__(
         self,
-        model_name="meta-llama/Llama-2-7b-chat-hf",
+        model_name="meta-llama/Llama-3.3-70B-Instruct",
         max_gen_len: int = 0,
         answer_type="movie",
         answer_mask="<movie>",

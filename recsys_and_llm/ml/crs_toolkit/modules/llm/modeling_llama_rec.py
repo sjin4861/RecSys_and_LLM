@@ -1,4 +1,5 @@
 import logging
+import os
 
 from crs_toolkit import BaseModule
 from crs_toolkit.modules.monitor import monitor
@@ -8,6 +9,8 @@ from .configuration_llm_rec import LLMRecConfig
 from .tokenizer_llama import LlamaTokenizer
 
 logger = logging.getLogger(__name__)
+
+HF_TOKEN = os.getenv("HF_AUTH_TOKEN")
 
 
 class LlamaRec(BaseModule):
@@ -19,7 +22,12 @@ class LlamaRec(BaseModule):
     tokenizer_class = LlamaTokenizer
 
     def __init__(
-        self, config: LLMRecConfig, prompt=None, model_name=None, debug=False, **kwargs
+        self,
+        config: LLMRecConfig,
+        prompt=None,
+        model_name="meta-llama/Llama-3.3-70B-Instruct",
+        debug=False,
+        **kwargs,
     ):
         super().__init__(config, **kwargs)
         self.model_name = config.model_name if model_name is None else model_name
@@ -27,8 +35,10 @@ class LlamaRec(BaseModule):
         self.debug = debug
 
         # 모델과 토크나이저를 미리 로드 (매번 로드하지 않도록)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, token=HF_TOKEN)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name, token=HF_TOKEN
+        )
 
     @classmethod
     def from_pretrained(

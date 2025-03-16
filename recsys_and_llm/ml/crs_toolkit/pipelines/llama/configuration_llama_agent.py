@@ -11,7 +11,7 @@ class LlamaAgentConfig(BaseConfig):
         answer_type (str): The type of answer tokens to generate.
     """
 
-    def __init__(self, model_name="meta-llama/Llama-2-7b-chat-hf", **kwargs):
+    def __init__(self, model_name="meta-llama/Llama-3.3-70B-Instruct", **kwargs):
         super().__init__(**kwargs)
         self.model_name = model_name
         self.prompt = ""
