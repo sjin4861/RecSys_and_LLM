@@ -4,33 +4,49 @@ from collections import Counter
 from pymongo import MongoClient
 from transformers import pipeline
 
-from recsys_and_llm.backend.app.config import DB_NAME, MONGO_URI
-
-
-def calculate_genre_distribution(item_collection, all_genres):
-    """
-    전체 영화 데이터에서 장르 분포를 계산하여 전역 장르 빈도수 반환
-    """
-    genre_counts = Counter()
-    total_genre_mappings = 0
-
-    for movie in item_collection.find({}, {"predicted_genre": 1}):
-        if "predicted_genre" in movie:
-            genre_counts.update(movie["predicted_genre"])
-            total_genre_mappings += len(movie["predicted_genre"])
-
-    # 장르별 분포 확률 계산 (P(genre))
-    genre_distribution = {
-        genre: genre_counts[genre] / total_genre_mappings for genre in all_genres
-    }
-    return genre_distribution
+from recsys_and_llm.backend.app.config import ALL_GENRES, DB_NAME, MONGO_URI
+from recsys_and_llm.ml.utils import calculate_genre_distribution
 
 
 def predict_user_preferred_genres(
+    model,
+    candidate_genres,
+    sorted_user_genre_counts,
+    sorted_watched_genres_by_rarity,
+    k=3,
+    model_name="unsloth/phi-4-unsloth-bnb-4bit",
+):
+
+    prompt = [
+        {
+            "role": "system",
+            "content": f"You are an AI movie genre predictor. Your task is to determine the top {k} genres a user is most likely to prefer based on their past viewing history and genre rarity. Follow these rules: 1. Choose ONLY from the given genres: {', '.join(candidate_genres)}. 2. Output ONLY the predicted genres as a comma-separated list. 3. Do NOT repeat or copy the full genre list. 4. Do NOT add explanations or extra text.",
+        },
+        {
+            "role": "user",
+            "content": f"User's Most Frequently Watched Genres (from most to least frequent): {', '.join(sorted_user_genre_counts)}\n"
+            f"User's Watched Genres Sorted by Rarity (from rarest to most common): {', '.join(sorted_watched_genres_by_rarity)}\n"
+            f"Rarer and more frequent genres should be given priority if they are relevant.\n"
+            f"Predicted Genres:",
+        },
+    ]
+
+    output = model(prompt, max_new_tokens=15)[0]["generated_text"][-1]["content"]
+
+    # 예측된 장르 리스트 변환
+    predicted_genres = [genre.strip() for genre in output.split(",")]
+    filtered_genres = [genre for genre in predicted_genres if genre in ALL_GENRES]
+    print(filtered_genres)
+    # 3개 중 랜덤하게 하나 고르기
+    genre = random.choice(filtered_genres) if filtered_genres else None
+
+    return genre
+
+
+def predict_user_preferred_genres_test(
     user_collection,
     item_collection,
     reviewer_id,
-    all_genres,
     model_name="unsloth/phi-4-unsloth-bnb-4bit",
     k=3,
     alpha=0.7,
@@ -71,7 +87,7 @@ def predict_user_preferred_genres(
 
     # 전역 장르 분포 계산 (전체 영화 데이터 기반)
     global_genre_distribution = calculate_genre_distribution(
-        item_collection, all_genres
+        item_collection, ALL_GENRES
     )
     sorted_watched_genres_by_rarity = sorted(
         candidate_genres,
@@ -121,7 +137,7 @@ def predict_user_preferred_genres(
 
     # 예측된 장르 리스트 변환
     predicted_genres = [genre.strip() for genre in output.split(",")]
-    filtered_genres = [genre for genre in predicted_genres if genre in all_genres]
+    filtered_genres = [genre for genre in predicted_genres if genre in ALL_GENRES]
     print(filtered_genres)
     # 3개 중 랜덤하게 하나 고르기
     genre = random.choice(filtered_genres) if filtered_genres else None
@@ -129,47 +145,16 @@ def predict_user_preferred_genres(
     return genre
 
 
-# MongoDB 연결 설정
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
-item_collection = db["item"]
-user_collection = db["user"]
+def main():
+    # MongoDB 연결 설정
+    client = MongoClient(MONGO_URI)
+    db = client[DB_NAME]
+    item_collection = db["item"]
+    user_collection = db["user"]
 
-# 사용 가능한 장르 리스트 (예시)
-all_genres = [
-    "Action",
-    "Adult",
-    "Adventure",
-    "Animation",
-    "Biography",
-    "Comedy",
-    "Crime",
-    "Documentary",
-    "Drama",
-    "Family",
-    "Fantasy",
-    "Film-Noir",
-    "Game-Show",
-    "History",
-    "Horror",
-    "Music",
-    "Musical",
-    "Mystery",
-    "News",
-    "Reality-TV",
-    "Romance",
-    "Sci-Fi",
-    "Short",
-    "Sport",
-    "Talk-Show",
-    "Thriller",
-    "War",
-    "Western",
-]
-
-# 특정 유저에 대한 장르 예측 실행
-reviewer_id = "A2M1CU2IRZG0K9"
-predicted_genre = predict_user_preferred_genres(
-    user_collection, item_collection, reviewer_id, all_genres
-)
-print(predicted_genre)
+    # 특정 유저에 대한 장르 예측 실행
+    reviewer_id = "A2M1CU2IRZG0K9"
+    predicted_genre = predict_user_preferred_genres_test(
+        user_collection, item_collection, reviewer_id, ALL_GENRES
+    )
+    print(predicted_genre)

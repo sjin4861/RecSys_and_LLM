@@ -4,6 +4,9 @@ import torch
 import torch.nn.functional as F
 
 from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import gsasrec_recommend_top5
+from recsys_and_llm.ml.models.Phi4.user_genre_predict import (
+    predict_user_preferred_genres,
+)
 from recsys_and_llm.ml.models.TiSASRec.TiSASRec_inference import tisasrec_recommend_top5
 from recsys_and_llm.ml.utils import seq_preprocess
 
@@ -54,3 +57,31 @@ def item_content_inference(model_manager, item_id):
             prediction.append(str(ele))
 
     return prediction[:8]
+
+
+def genre_inference(model_manager, user_genre_counts, k=3):
+    candidate_genres = set(user_genre_counts)
+    if len(candidate_genres) < 3:
+        k = len(candidate_genres)
+
+    sorted_user_genre_counts = sorted(
+        user_genre_counts.keys(),
+        key=lambda genre: user_genre_counts[genre],
+        reverse=True,
+    )
+
+    sorted_watched_genres_by_rarity = sorted(
+        candidate_genres,
+        key=lambda genre: model_manager.global_genre_distribution.get(genre, 1),
+        reverse=False,
+    )
+
+    user_genre = predict_user_preferred_genres(
+        model_manager.genrerec_model,
+        candidate_genres,
+        sorted_user_genre_counts,
+        sorted_watched_genres_by_rarity,
+        k=k,
+    )
+
+    return user_genre

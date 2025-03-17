@@ -1,10 +1,15 @@
 import re
+from collections import Counter
 from datetime import datetime
 
 import requests
 
 from recsys_and_llm.backend.app.config import DEFAULT_IMAGE_URL
-from recsys_and_llm.backend.app.inference import inference, item_content_inference
+from recsys_and_llm.backend.app.inference import (
+    genre_inference,
+    inference,
+    item_content_inference,
+)
 from recsys_and_llm.backend.app.schemas import *
 
 
@@ -73,6 +78,17 @@ def sign_in(
 
     result = inference(model_manager, user_id, seq, seq_time)
 
+    watched_genres = [
+        genre
+        for item in user_data["items"]
+        if "predicted_genre" in item
+        for genre in item["predicted_genre"]
+    ]
+
+    # 유저의 장르 빈도수 계산
+    user_genre_counts = Counter(watched_genres)
+    genre = genre_inference(model_manager, user_genre_counts)
+
     # match = re.search(r"\(ID: (\d+)\)", result["allmrec_prediction"])
     # allmrec_ids = [match.group(1)] if match else []
 
@@ -118,7 +134,7 @@ def sign_in(
             for _id in tisasrec_ids
         ],
         "prediction-4": {
-            "genre": "predicted_genre",
+            "genre": genre,
             "movies": [
                 {
                     "item_id": _id,

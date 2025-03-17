@@ -26,11 +26,12 @@ class ModelManager:
             device=self.device,
         )
 
-        cold_items, text_name_dict, missing_list = data
+        cold_items, text_name_dict, missing_list, global_genre_distribution = data
         self.llmrec_args.cold_items = cold_items
         self.llmrec_args.text_name_dict = text_name_dict
         self.llmrec_args.missing_items = missing_list
         self.missing_list = missing_list
+        self.global_genre_distribution = global_genre_distribution
 
         # ModelLoader를 통해 모든 모델을 한 번에 로드
         model_loader = ModelLoader(self.llmrec_args)
