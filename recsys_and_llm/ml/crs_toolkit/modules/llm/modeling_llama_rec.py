@@ -54,8 +54,19 @@ class LlamaRec(BaseModule):
         )
 
     @classmethod
-    def get_tokenizer(cls, **kwargs):
-        return LlamaTokenizer()
+    def get_tokenizer(cls, model_name=None, **kwargs):
+        """
+        Returns a tokenizer for the LlamaRec model.
+
+        Args:
+            model_name (str): The model name or path to load the tokenizer from.
+                              If None, use the default from the class config.
+
+        Returns:
+            tokenizer (PreTrainedTokenizer): Loaded tokenizer.
+        """
+        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct", **kwargs)
+        return tokenizer
 
     @monitor
     def response(

@@ -6,7 +6,7 @@ import openai
 from crs_toolkit import BaseModule
 from crs_toolkit.modules.monitor import monitor
 from crs_toolkit.utility import DeviceManager
-from transformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .configuration_llm import LLMConfig
 from .tokenizer_llama import LlamaTokenizer
@@ -72,15 +72,19 @@ class LlamaGen(BaseModule):
         )
 
     @classmethod
-    def get_tokenizer(cls, **kwargs):
+    def get_tokenizer(cls, model_name=None, **kwargs):
         """
-        Get a tokenizer.
+        Returns a tokenizer for the LlamaGen model.
+
+        Args:
+            model_name (str): The model name or path to load the tokenizer from.
+                              If None, use the default from the class config.
 
         Returns:
-            (ChatgptTokenizer): the tokenizer.
+            tokenizer (PreTrainedTokenizer): Loaded tokenizer.
         """
-        # return lambda x: {'context': x}
-        return LlamaTokenizer()
+        tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct", **kwargs)
+        return tokenizer
 
     @monitor
     def response(
