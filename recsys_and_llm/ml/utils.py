@@ -152,3 +152,23 @@ def clean_text(text):
     # 🔹 중복 공백 제거 (모든 종류의 공백 포함)
     text = re.sub(r"\s+", " ", text, flags=re.UNICODE)
     return text
+
+
+def calculate_genre_distribution(item_collection, all_genres):
+    """
+    전체 영화 데이터에서 장르 분포를 계산하여 전역 장르 빈도수 반환
+    """
+    genre_counts = Counter()
+    total_genre_mappings = 0
+
+    for movie in item_collection.find({}, {"predicted_genre": 1}):
+        if "predicted_genre" in movie:
+            genre_counts.update(movie["predicted_genre"])
+            total_genre_mappings += len(movie["predicted_genre"])
+
+    # 장르별 분포 확률 계산 (P(genre))
+    genre_distribution = {
+        genre: genre_counts[genre] / total_genre_mappings for genre in all_genres
+    }
+    return genre_distribution
+

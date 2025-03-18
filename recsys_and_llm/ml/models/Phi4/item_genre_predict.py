@@ -1,7 +1,8 @@
 from pymongo import MongoClient
 from transformers import pipeline
 
-from recsys_and_llm.backend.app.config import DB_NAME, MONGO_URI
+from recsys_and_llm.backend.app.config import ALL_GENRES, DB_NAME, MONGO_URI
+
 
 
 def predict_movie_genres(
@@ -97,37 +98,7 @@ db = client[DB_NAME]
 item_collection = db["item"]
 user_collection = db["user"]
 
-# 사용 가능한 장르 리스트 (예시)
-all_genres = [
-    "Action",
-    "Adult",
-    "Adventure",
-    "Animation",
-    "Biography",
-    "Comedy",
-    "Crime",
-    "Documentary",
-    "Drama",
-    "Family",
-    "Fantasy",
-    "Film-Noir",
-    "Game-Show",
-    "History",
-    "Horror",
-    "Music",
-    "Musical",
-    "Mystery",
-    "News",
-    "Reality-TV",
-    "Romance",
-    "Sci-Fi",
-    "Short",
-    "Sport",
-    "Talk-Show",
-    "Thriller",
-    "War",
-    "Western",
-]
 
 # 함수 실행
-predict_movie_genres(item_collection, user_collection, all_genres)
+predict_movie_genres(item_collection, user_collection, ALL_GENRES)
+

@@ -6,9 +6,14 @@ from fastapi import FastAPI, Request
 from pymongo import MongoClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from recsys_and_llm.backend.app.config import DB_NAME, MONGO_URI
+from recsys_and_llm.backend.app.config import ALL_GENRES, DB_NAME, MONGO_URI
 from recsys_and_llm.ml.models.model_manager import ModelManager
-from recsys_and_llm.ml.utils import find_cold, get_missing, get_text_name_dict
+from recsys_and_llm.ml.utils import (
+    calculate_genre_distribution,
+    find_cold,
+    get_missing,
+    get_text_name_dict,
+)
 
 
 @asynccontextmanager
@@ -26,8 +31,12 @@ async def lifespan(app: FastAPI):
     cold_items = find_cold(user_collection, 50)
     text_name_dict = get_text_name_dict(item_collection)
     missing_list = get_missing(text_name_dict["title"])
+    global_genre_distribution = calculate_genre_distribution(
+        item_collection, ALL_GENRES
+    )
 
-    data = [cold_items, text_name_dict, missing_list]
+    data = [cold_items, text_name_dict, missing_list, global_genre_distribution]
+
 
     # 모델 로드
     model_manager = ModelManager(data)
