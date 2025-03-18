@@ -2,8 +2,9 @@ import argparse
 import json
 
 from data_preprocess import *
-from db import *
 from pymongo import MongoClient
+
+from db import *
 
 
 def str2bool(s):

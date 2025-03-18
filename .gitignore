@@ -3,3 +3,5 @@ __pycache__
 .env
 .vscode
 recsys_and_llm/ml/models/Phi4/llm_predictions.txt
+recsys_and_llm/data/crawling/raw/*
+
