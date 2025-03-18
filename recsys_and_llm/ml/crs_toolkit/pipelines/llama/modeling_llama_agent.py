@@ -62,5 +62,9 @@ class LlamaAgent(BasePipeline):
         class AgentResponse:
             def __init__(self, content):
                 self.content = content
-
+            def __str__(self):
+                return self.content
+            def __repr__(self):
+                return f"AgentResponse(content={self.content})"
+    
         return AgentResponse(generated_text)
