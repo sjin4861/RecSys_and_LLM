@@ -2,4 +2,4 @@ __pycache__
 .venv
 .env
 .vscode
-recsys_and_llm/ml/models/Phi-4/llm_predictions.txt
+recsys_and_llm/ml/models/Phi4/llm_predictions.txt
