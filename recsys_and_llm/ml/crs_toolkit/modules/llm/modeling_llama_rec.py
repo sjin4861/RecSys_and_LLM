@@ -25,7 +25,7 @@ class LlamaRec(BaseModule):
         self,
         config: LLMRecConfig,
         prompt=None,
-        model_name="meta-llama/Llama-3.3-70B-Instruct",
+        model_name="meta-llama/Llama-3.2-1B-Instruct",
         debug=False,
         **kwargs,
     ):

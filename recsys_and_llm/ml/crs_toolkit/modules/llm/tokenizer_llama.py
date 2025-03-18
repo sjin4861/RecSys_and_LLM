@@ -17,7 +17,7 @@ class LlamaTokenizer(BaseTokenizer):
         """
         super().__init__(
             tokenizers=[
-                AutoTokenizer.from_pretrained("meta-llama/Llama-3.3-70B-Instruct"),
+                AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct"),
             ]
         )
         self.tokenizers[0].pad_token = self.tokenizers[0].eos_token
