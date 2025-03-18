@@ -4,9 +4,8 @@ import torch
 import torch.nn.functional as F
 
 from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import gsasrec_recommend_top5
-from recsys_and_llm.ml.models.Phi4.user_genre_predict import (
-    predict_user_preferred_genres,
-)
+from recsys_and_llm.ml.models.Phi4.user_genre_predict import predict_user_preferred_genres
+
 from recsys_and_llm.ml.models.TiSASRec.TiSASRec_inference import tisasrec_recommend_top5
 from recsys_and_llm.ml.utils import seq_preprocess
 
@@ -85,3 +84,4 @@ def genre_inference(model_manager, user_genre_counts, k=3):
     )
 
     return user_genre
+

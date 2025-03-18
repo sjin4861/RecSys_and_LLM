@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
 
     data = [cold_items, text_name_dict, missing_list, global_genre_distribution]
 
+
     # 모델 로드
     model_manager = ModelManager(data)
 

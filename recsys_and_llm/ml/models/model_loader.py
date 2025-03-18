@@ -6,6 +6,7 @@ import torch
 from huggingface_hub import hf_hub_download
 from transformers import pipeline
 
+
 from recsys_and_llm.ml.models.ALLMRec.a_llmrec_model import A_llmrec_model
 from recsys_and_llm.ml.models.gSASRec.gsasrec_inference import build_model
 from recsys_and_llm.ml.models.TiSASRec.TiSASRec_inference import TiSASRec
@@ -100,6 +101,7 @@ class ModelLoader:
         self._load_gsasrec()
         self._load_contentrec()
         self._load_genrerec()
+
 
     def get_models(self):
         return {

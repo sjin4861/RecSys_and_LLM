@@ -171,3 +171,4 @@ def calculate_genre_distribution(item_collection, all_genres):
         genre: genre_counts[genre] / total_genre_mappings for genre in all_genres
     }
     return genre_distribution
+

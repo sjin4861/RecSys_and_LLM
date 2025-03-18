@@ -4,6 +4,7 @@ from transformers import pipeline
 from recsys_and_llm.backend.app.config import ALL_GENRES, DB_NAME, MONGO_URI
 
 
+
 def predict_movie_genres(
     item_collection,
     user_collection,
@@ -100,3 +101,4 @@ user_collection = db["user"]
 
 # 함수 실행
 predict_movie_genres(item_collection, user_collection, ALL_GENRES)
+

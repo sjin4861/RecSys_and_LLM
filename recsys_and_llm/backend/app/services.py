@@ -1,5 +1,6 @@
 import re
 from collections import Counter
+
 from datetime import datetime
 
 import requests
@@ -10,6 +11,7 @@ from recsys_and_llm.backend.app.inference import (
     inference,
     item_content_inference,
 )
+
 from recsys_and_llm.backend.app.schemas import *
 
 
