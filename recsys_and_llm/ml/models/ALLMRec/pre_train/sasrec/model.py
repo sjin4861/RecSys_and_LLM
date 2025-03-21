@@ -133,7 +133,7 @@ class SASRec(torch.nn.Module):
         else:
             return pos_logits, neg_logits
 
-    def predict(self, user_ids, log_seqs, item_indices, log_emb=None):
+    def predict(self, item_indices, user_ids=None, log_seqs=None, log_emb=None):
         if log_emb is None:
             log_feats = self.log2feats(log_seqs)
             final_feat = log_feats[:, -1, :]
