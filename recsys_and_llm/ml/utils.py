@@ -93,7 +93,7 @@ def get_text_name_dict(item_collection):
     return text_name_dict
 
 
-def make_candidate_for_LLM(model, itemnum, log_seq, args):
+def make_candidate_for_LLM(model, itemnum, log_emb, log_seq, args):
     seq = np.zeros([args.maxlen], dtype=np.int32)
     idx = args.maxlen - 1
     for i in reversed(log_seq):
@@ -110,7 +110,13 @@ def make_candidate_for_LLM(model, itemnum, log_seq, args):
             continue
         item_idx.append(t)
 
-    predictions = -model.predict(*[np.array(l) for l in [[-1], [seq], item_idx]])
+    # predictions = -model.predict(*[np.array(l) for l in [[-1], [seq], item_idx]])
+    predictions = -model.predict(
+        np.array([-1]),  # user_id placeholder
+        np.array([seq]),  # sequence
+        np.array(item_idx),  # candidate items
+        log_emb=log_emb,  # 유저 임베딩
+    )
     predictions = predictions[0]  # - for 1st argsort DESC
 
     # Top-K 아이템 선택 (가장 높은 점수 기준)
@@ -171,4 +177,3 @@ def calculate_genre_distribution(item_collection, all_genres):
         genre: genre_counts[genre] / total_genre_mappings for genre in all_genres
     }
     return genre_distribution
-
