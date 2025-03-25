@@ -224,13 +224,25 @@ def detail_prediction(
 
     predictions = item_content_inference(model_manager, item_data["_id"])
     items = item_collection.find(
-        {"_id": {"$in": predictions}}, {"_id": 1, "available_images": 1}
+        {"_id": {"$in": predictions}}, {"_id": 1, "available_images": 1, "title": 1}
     )
     item_map = {
-        item["_id"]: get_item_img(item.get("available_images", [])) for item in items
+        item["_id"]: {
+            "image": get_item_img(item.get("available_images", [])),
+            "title": item.get(
+                "title", "Unknown"
+            ).strip(),  # title 추가, 기본값 "Unknown"
+        }
+        for item in items
     }
+
     predictions = [
-        {"item_id": _id, "img_url": item_map.get(_id, None)} for _id in predictions
+        {
+            "item_id": _id,
+            "img_url": item_map.get(_id, {}).get("image"),
+            "title": item_map.get(_id, {}).get("title"),
+        }
+        for _id in predictions
     ]
 
     # 5. 반환할 데이터 구성
