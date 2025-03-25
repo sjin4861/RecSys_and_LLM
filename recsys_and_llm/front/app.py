@@ -48,7 +48,6 @@ def main():
             if login_response["success"]:
                 st.session_state.reviewer_id = id
                 st.session_state.user_name = login_response["data"]["name"]
-                st.session_state.predictions = login_response["data"]["predictions"]
 
                 st.switch_page(
                     "./pages/main_page.py",

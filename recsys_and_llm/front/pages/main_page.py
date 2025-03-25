@@ -48,7 +48,7 @@ def main():
             st.session_state.predictions["prediction-3"],
         )
         rec_line(
-            f"Movies in the {st.session_state.predictions["prediction-4"]["genre"]} genre that {st.session_state.user_name} likes",
+            f"Movies in the {st.session_state.predictions['prediction-4']['genre']} genre that {st.session_state.user_name} likes",
             st.session_state.predictions["prediction-4"]["movies"],
         )
 
