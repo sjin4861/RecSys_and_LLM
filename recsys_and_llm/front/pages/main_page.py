@@ -48,8 +48,8 @@ def main():
             st.session_state.predictions["prediction-3"],
         )
         rec_line(
-            f"Movies in the horror genre that {st.session_state.user_name} likes",  # TODO 장르기반 추천
-            st.session_state.predictions["prediction-3"],
+            f"Movies in the {st.session_state.predictions['prediction-4']['genre']} genre that {st.session_state.user_name} likes",
+            st.session_state.predictions["prediction-4"]["movies"],
         )
 
         _, logout_btn, _ = st.columns([0.725, 0.15, 0.725])
