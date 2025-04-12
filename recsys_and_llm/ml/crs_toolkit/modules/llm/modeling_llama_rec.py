@@ -127,8 +127,6 @@ class LlamaRec(BaseModule):
         
         # inputs = tokenizer(final_prompt, return_tensors="pt", padding=True)
         # print("[LlamaRec] final input to model:", final_prompt)
-        import pdb
-        pdb.set_trace()
         outputs = self.model.generate(
             **encodings,
             max_new_tokens=max_tokens,

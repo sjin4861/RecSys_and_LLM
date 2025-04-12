@@ -47,10 +47,8 @@ class LlamaAgent(BasePipeline):
         self.answer_type = "movies"
 
     def response(self, query, max_tokens=128, **kwargs):
-        print("[LlamaAgent] user query:", query)
         # 1) 우선 Gen 모듈을 사용해 1차 응답 생성
         gen_output = self.gen_module.response(query, tokenizer=self.gen_tokenizer)
-        print("[LlamaAgent] gen_output:", gen_output)
         # 2) 1차 응답에서 영화 개수 파악 후 Rec 모듈로 추천 생성
         n_movies = len(self.movie_pattern.findall(gen_output if isinstance(gen_output, str) else gen_output[0]))
         
@@ -70,5 +68,4 @@ class LlamaAgent(BasePipeline):
             **kwargs,
         )
         final_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        print("[LlamaAgent] final output from model:", final_text)
         return f"Final Answer:\n{final_text}"
